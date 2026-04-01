@@ -1,0 +1,29 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Central-LJ — C4 Nível 2 (Contêineres)
+
+Person(usuario, "Usuário comum", "Consulta ou interação leve com a central (evolução pós-N1).")
+Person(operador, "Operador / Admin", "Registra missões e acompanha operações.")
+
+System_Boundary(central, "Central-LJ") {
+  Container(spa, "SPA / Frontend", "React + TypeScript + Vite", "Interface operacional: registro e acompanhamento de missões. Futuro: timeline e dashboards.")
+  Container(api, "Backend", "Spring Boot (Java)", "Camada REST; services e DTOs; módulo Kafka (produtor/consumidor N1); **WebSocket planejado**; JDBC/JPA **a partir da N2**.")
+  ContainerQueue(kafka, "Kafka", "Apache Kafka", "Eventos de domínio (missão, mudança de estado). Desacopla API de processamento assíncrono.")
+  ContainerDb(pg, "PostgreSQL", "PostgreSQL 16", "Modelo relacional de missões, equipes e histórico (N2+).")
+  Container(ui, "Kafka UI", "Provectus Kafka UI", "Ferramenta **apenas dev**: inspeção de tópicos na N1.")
+}
+
+Rel(usuario, spa, "Usa (futuro)", "HTTPS")
+Rel(operador, spa, "Usa a central (N1)", "HTTPS")
+Rel(spa, api, "API REST", "HTTP/JSON")
+Rel(api, kafka, "Publica e consome", "protocolo Kafka")
+Rel(kafka, api, "Entrega mensagens", "consumidor Spring Kafka")
+
+Rel(api, pg, "ORM/JDBC (futuro)", "N2+")
+
+Rel(operador, ui, "Inspeciona tópicos (dev)", "http://localhost:8088")
+Rel(ui, kafka, "Administração visual", "rede Docker")
+
+SHOW_LEGEND()
+@enduml

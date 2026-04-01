@@ -1,0 +1,31 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Central-LJ — C4 Nível 1 (Contexto)
+
+Person(usuario, "Usuário comum", "Consulta ou interação prevista com a central (evolução pós-N1).")
+Person(operador, "Operador / Admin", "Registra missões, acompanha operações e indicadores.")
+
+System_Boundary(sistema, "Central de Missões da Liga da Justiça (Central-LJ)") {
+  System(web, "Frontend Web", "React (Vite). Interface desktop-first da central.")
+  System(api, "Backend API", "Spring Boot. REST, validação e integração com mensageria.")
+  SystemQueue(bus, "Apache Kafka", "Log de eventos do domínio (missões, mudanças de status).")
+  SystemDb(db, "PostgreSQL", "Persistência de missões, usuários e histórico (N2+).")
+}
+
+Rel(usuario, web, "Usa", "HTTPS")
+Rel(operador, web, "Usa", "HTTPS")
+
+Rel(web, api, "Consome API", "REST/JSON")
+Rel(api, bus, "Publica eventos", "tópicos Kafka")
+Rel(bus, api, "Entrega a consumidores", "grupo de consumidores N1/N2")
+
+Rel(api, db, "Acessa dados (futuro)", "JDBC")
+
+note right of bus
+  Na N1: publicação e consumo mínimo
+  provam o backbone assíncrono.
+end note
+
+SHOW_LEGEND()
+@enduml

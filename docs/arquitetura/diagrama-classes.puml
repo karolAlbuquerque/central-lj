@@ -1,0 +1,86 @@
+@startuml
+title Central-LJ — Domínio principal (visão N1/N2)
+
+note top
+  N1: visão conceitual do domínio (JPA não obrigatório nesta fase).
+  N2+: PostgreSQL, transições de status e consumidores Kafka com efeito em Missão / histórico.
+end note
+
+hide circle
+skinparam classAttributeIconSize 0
+left to right direction
+
+enum StatusMissao {
+  RECEBIDA
+  EM_ANALISE
+  PRIORIZADA
+  EQUIPE_DESIGNADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+  FALHA_PROCESSAMENTO
+}
+
+class Usuario {
+  +id: UUID
+  +nome: String
+  +email: String
+}
+
+class Missao {
+  +id: UUID
+  +titulo: String
+  +descricao: String
+  +status: StatusMissao
+  +criadaEm: Instant
+}
+
+class Localizacao {
+  +cidade: String
+  +bairro: String
+  +referencia: String
+}
+
+class TipoAmeaca {
+  +codigo: String
+  +descricao: String
+}
+
+class Prioridade {
+  +nivel: int
+  +rotulo: String
+}
+
+class EquipeHeroica {
+  +id: UUID
+  +nome: String
+}
+
+class Heroi {
+  +id: UUID
+  +codinome: String
+}
+
+class EventoMissao {
+  +eventId: UUID
+  +missionId: UUID
+  +tipo: String
+  +status: StatusMissao
+  +ocorridoEm: Instant
+}
+
+Usuario "1" o-- "0..*" Missao : registra
+Missao "1" *-- "1" Localizacao
+Missao "1" --> "1" TipoAmeaca
+Missao "1" --> "1" Prioridade
+Missao "0..1" --> "1" EquipeHeroica : designada
+EquipeHeroica "1" o-- "1..*" Heroi
+
+EventoMissao --> Missao : ref
+note bottom of EventoMissao
+  Reflete fatos imutáveis (adequado a Kafka).
+  N2+: consumidores atualizam **Missao.status**
+  e gravam histórico.
+end note
+
+@enduml
