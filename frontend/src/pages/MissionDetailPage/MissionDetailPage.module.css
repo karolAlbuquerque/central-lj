@@ -1,0 +1,139 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.back {
+  color: var(--accent-info);
+  text-decoration: none;
+  font-size: 14px;
+  width: fit-content;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px 24px;
+  background: rgba(18, 26, 51, 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.title {
+  margin: 0 0 12px;
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.meta {
+  display: grid;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.meta strong {
+  color: var(--text);
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.desc {
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.sectionTitle {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.sectionHint {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.timeline {
+  position: relative;
+  padding-left: 20px;
+  border-left: 2px solid rgba(77, 163, 255, 0.35);
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.item {
+  position: relative;
+  padding-left: 8px;
+}
+
+.item::before {
+  content: "";
+  position: absolute;
+  left: -25px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-info);
+  box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.2);
+}
+
+.itemOrigemApi::before {
+  background: var(--accent-success);
+}
+
+.itemOrigemErro::before {
+  background: var(--accent-danger);
+}
+
+.time {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.msg {
+  font-size: 14px;
+  color: var(--text);
+  margin: 0 0 6px;
+  line-height: 1.45;
+}
+
+.transition {
+  font-size: 12px;
+  color: var(--accent-info);
+}
+
+.error {
+  color: var(--accent-danger);
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+}

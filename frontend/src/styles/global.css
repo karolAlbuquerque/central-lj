@@ -1,0 +1,34 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --bg-deep: #0b1020;
+  --surface: #121a33;
+  --surface-elevated: #1a2540;
+  --border: #243056;
+  --text: #e6eaf2;
+  --muted: #aab3c5;
+  --accent-info: #4da3ff;
+  --accent-success: #2ee59d;
+  --accent-warn: #ffc857;
+  --accent-danger: #ff4d6d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  color: #4da3ff;
+}
+

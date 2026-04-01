@@ -1,0 +1,18 @@
+# Testes: H2 em memória, sem Flyway nem Kafka consumer.
+spring:
+  datasource:
+    url: jdbc:h2:mem:central_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+
+central-lj:
+  kafka:
+    consumer-enabled: false
+    topic-created: missions.created
+    workflow-step-delay-ms: 0

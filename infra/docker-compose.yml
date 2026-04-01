@@ -1,0 +1,36 @@
+# Central-LJ — ambiente local (N1)
+# Kafka (imagem oficial), Kafka UI para inspeção, PostgreSQL para etapas futuras.
+
+services:
+  kafka:
+    image: apache/kafka:3.7.2
+    container_name: central-lj-kafka
+    ports:
+      - "9092:9092"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: central-lj-kafka-ui
+    ports:
+      - "8088:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: central-lj-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+
+  postgres:
+    image: postgres:16
+    container_name: central-lj-postgres
+    # Host 5433 evita conflito com PostgreSQL instalado localmente na porta 5432.
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: central_lj
+      POSTGRES_USER: central_lj
+      POSTGRES_PASSWORD: central_lj
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

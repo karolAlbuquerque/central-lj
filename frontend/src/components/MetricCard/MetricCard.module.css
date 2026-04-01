@@ -1,0 +1,50 @@
+.card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: rgba(18, 26, 51, 0.55);
+  backdrop-filter: blur(10px);
+  min-height: 96px;
+}
+
+.default {
+  border-color: rgba(77, 163, 255, 0.25);
+}
+
+.success {
+  border-color: rgba(46, 229, 157, 0.3);
+  background: linear-gradient(145deg, rgba(46, 229, 157, 0.08), rgba(18, 26, 51, 0.55));
+}
+
+.warn {
+  border-color: rgba(255, 200, 87, 0.35);
+  background: linear-gradient(145deg, rgba(255, 200, 87, 0.06), rgba(18, 26, 51, 0.55));
+}
+
+.danger {
+  border-color: rgba(255, 77, 109, 0.35);
+  background: linear-gradient(145deg, rgba(255, 77, 109, 0.08), rgba(18, 26, 51, 0.55));
+}
+
+.label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.35;
+}

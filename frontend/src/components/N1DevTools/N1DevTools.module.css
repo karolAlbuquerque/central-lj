@@ -1,0 +1,99 @@
+.wrap {
+  margin-top: 28px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.wrap summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.inner {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form,
+.kafka {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.input,
+.textarea {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(11, 16, 32, 0.65);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.btn {
+  border: 1px solid rgba(46, 229, 157, 0.4);
+  background: rgba(46, 229, 157, 0.14);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn:disabled,
+.btnSec:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btnSec {
+  border: 1px solid rgba(77, 163, 255, 0.45);
+  background: rgba(77, 163, 255, 0.12);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.ok,
+.err {
+  font-size: 13px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(77, 163, 255, 0.35);
+}
+
+.err {
+  border-color: rgba(255, 77, 109, 0.35);
+  color: #ffb8c8;
+}
+
+.pre {
+  margin: 8px 0 0;
+  font-size: 11px;
+  overflow: auto;
+}
