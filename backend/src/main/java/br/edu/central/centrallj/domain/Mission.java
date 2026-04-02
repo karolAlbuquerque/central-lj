@@ -4,7 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -47,6 +50,20 @@ public class Mission {
 
   @Column(length = 500)
   private String referencia;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "heroi_responsavel_id")
+  private Heroi heroiResponsavel;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "equipe_responsavel_id")
+  private EquipeHeroica equipeResponsavel;
+
+  @Column(name = "atribuido_em")
+  private Instant atribuidoEm;
+
+  @Column(name = "atribuido_por", length = 200)
+  private String atribuidoPor;
 
   public UUID getId() {
     return id;
@@ -134,5 +151,37 @@ public class Mission {
 
   public void setReferencia(String referencia) {
     this.referencia = referencia;
+  }
+
+  public Heroi getHeroiResponsavel() {
+    return heroiResponsavel;
+  }
+
+  public void setHeroiResponsavel(Heroi heroiResponsavel) {
+    this.heroiResponsavel = heroiResponsavel;
+  }
+
+  public EquipeHeroica getEquipeResponsavel() {
+    return equipeResponsavel;
+  }
+
+  public void setEquipeResponsavel(EquipeHeroica equipeResponsavel) {
+    this.equipeResponsavel = equipeResponsavel;
+  }
+
+  public Instant getAtribuidoEm() {
+    return atribuidoEm;
+  }
+
+  public void setAtribuidoEm(Instant atribuidoEm) {
+    this.atribuidoEm = atribuidoEm;
+  }
+
+  public String getAtribuidoPor() {
+    return atribuidoPor;
+  }
+
+  public void setAtribuidoPor(String atribuidoPor) {
+    this.atribuidoPor = atribuidoPor;
   }
 }

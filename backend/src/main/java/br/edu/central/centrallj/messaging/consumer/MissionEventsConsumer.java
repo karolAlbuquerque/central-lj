@@ -6,8 +6,9 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Consumer mínimo (N1): comprova que o broker entrega mensagens ao backend. O processamento real de
- * missão virá em etapas futuras.
+ * Consumer do tópico genérico {@code missions.events} — usado para testes manuais ({@code /api/events/publish-test})
+ * e observabilidade. Não participa do workflow de missão; o fluxo principal é {@code missions.created} →
+ * {@link MissionCreatedConsumer}.
  */
 @Component
 public class MissionEventsConsumer {
@@ -20,6 +21,6 @@ public class MissionEventsConsumer {
       groupId = "${spring.kafka.consumer.group-id}",
       autoStartup = "${central-lj.kafka.consumer-enabled:true}")
   public void onMissionEvent(String payload) {
-    log.info("[Central-LJ][Kafka] Evento recebido: {}", payload);
+    log.debug("[Central-LJ][Kafka] missions.events ← {}", payload);
   }
 }

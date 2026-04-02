@@ -21,7 +21,25 @@ public class MissionMapper {
         m.getStatus(),
         m.getDataCriacao(),
         m.getUltimaAtualizacao(),
-        loc);
+        loc,
+        buildAtribuicao(m));
+  }
+
+  private MissionResponse.AtribuicaoResumo buildAtribuicao(Mission m) {
+    if (m.getHeroiResponsavel() == null
+        && m.getEquipeResponsavel() == null
+        && m.getAtribuidoEm() == null) {
+      return null;
+    }
+    var h = m.getHeroiResponsavel();
+    var eq = m.getEquipeResponsavel();
+    return new MissionResponse.AtribuicaoResumo(
+        h != null ? h.getId() : null,
+        h != null ? h.getNomeHeroico() : null,
+        eq != null ? eq.getId() : null,
+        eq != null ? eq.getNome() : null,
+        m.getAtribuidoEm(),
+        m.getAtribuidoPor());
   }
 
   public MissionHistoryEntryResponse toHistoryEntry(MissionHistory h) {

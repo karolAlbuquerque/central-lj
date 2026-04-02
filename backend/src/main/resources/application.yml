@@ -36,6 +36,13 @@ spring:
       missing-topics-fatal: false
 
 central-lj:
+  security:
+    enabled: true
+    jwt:
+      secret: ${JWT_SECRET:central-lj-dev-secret-min-32b-long-key!!!}
+      expiration-hours: 48
+  auth:
+    demo-seed: true
   kafka:
     topic: ${CENTRAL_LJ_KAFKA_TOPIC:missions.events}
     topic-created: ${CENTRAL_LJ_KAFKA_TOPIC_CREATED:missions.created}

@@ -12,6 +12,10 @@ spring:
     enabled: false
 
 central-lj:
+  security:
+    enabled: false
+  auth:
+    demo-seed: false
   kafka:
     consumer-enabled: false
     topic-created: missions.created

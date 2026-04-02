@@ -15,7 +15,17 @@ public record MissionResponse(
     MissionStatus status,
     Instant dataCriacao,
     Instant ultimaAtualizacao,
-    LocalizacaoResponse localizacao) {
+    LocalizacaoResponse localizacao,
+    AtribuicaoResumo atribuicao) {
 
   public record LocalizacaoResponse(String cidade, String bairro, String referencia) {}
+
+  /** Dados de designação atual (herói ou equipe), quando houver. */
+  public record AtribuicaoResumo(
+      UUID heroiId,
+      String nomeHeroico,
+      UUID equipeId,
+      String nomeEquipe,
+      Instant atribuidoEm,
+      String atribuidoPor) {}
 }

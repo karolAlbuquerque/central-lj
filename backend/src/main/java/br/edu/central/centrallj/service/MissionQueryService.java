@@ -3,6 +3,7 @@ package br.edu.central.centrallj.service;
 import br.edu.central.centrallj.domain.MissionStatus;
 import br.edu.central.centrallj.dto.DashboardSummaryResponse;
 import br.edu.central.centrallj.dto.MissionDetailResponse;
+import br.edu.central.centrallj.dto.MissionHistoryEntryResponse;
 import br.edu.central.centrallj.dto.MissionMapper;
 import br.edu.central.centrallj.dto.MissionResponse;
 import br.edu.central.centrallj.exception.ResourceNotFoundException;
@@ -10,6 +11,7 @@ import br.edu.central.centrallj.repository.MissionHistoryRepository;
 import br.edu.central.centrallj.repository.MissionRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,10 +46,20 @@ public class MissionQueryService {
   }
 
   @Transactional(readOnly = true)
+  public List<MissionHistoryEntryResponse> getHistory(UUID id) {
+    if (!missionRepository.existsById(id)) {
+      throw new ResourceNotFoundException("Missão não encontrada: " + id);
+    }
+    return missionHistoryRepository.findByMission_IdOrderByOcorridoEmAsc(id).stream()
+        .map(missionMapper::toHistoryEntry)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
   public MissionDetailResponse getDetail(UUID id) {
     var mission =
         missionRepository
-            .findById(id)
+            .findByIdWithAssignments(id)
             .orElseThrow(() -> new ResourceNotFoundException("Missão não encontrada: " + id));
     var historico =
         missionHistoryRepository.findByMission_IdOrderByOcorridoEmAsc(id).stream()
@@ -65,7 +77,7 @@ public class MissionQueryService {
 
   @Transactional(readOnly = true)
   public List<MissionResponse> recentMissions() {
-    return missionRepository.findTop12ByOrderByDataCriacaoDesc().stream()
+    return missionRepository.findRecent(PageRequest.of(0, 12)).stream()
         .map(missionMapper::toResponse)
         .toList();
   }
@@ -77,7 +89,7 @@ public class MissionQueryService {
     long concluidas = missionRepository.countByStatus(MissionStatus.CONCLUIDA);
     long falhas = missionRepository.countByStatus(MissionStatus.FALHA_PROCESSAMENTO);
     List<MissionResponse> recentes =
-        missionRepository.findTop12ByOrderByDataCriacaoDesc().stream()
+        missionRepository.findRecent(PageRequest.of(0, 12)).stream()
             .map(missionMapper::toResponse)
             .toList();
     return new DashboardSummaryResponse(total, emAndamento, concluidas, falhas, recentes);

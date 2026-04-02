@@ -8,14 +8,12 @@ import br.edu.central.centrallj.dto.MissionMapper;
 import br.edu.central.centrallj.dto.MissionResponse;
 import br.edu.central.centrallj.messaging.event.MissionCreatedEventFactory;
 import br.edu.central.centrallj.messaging.event.MissionCreatedKafkaEvent;
-import br.edu.central.centrallj.messaging.producer.MissionCreatedEventProducer;
+import br.edu.central.centrallj.messaging.support.AfterCommitMissionDispatch;
 import br.edu.central.centrallj.repository.MissionRepository;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 public class MissionCommandService {
@@ -23,23 +21,20 @@ public class MissionCommandService {
   private final MissionRepository missionRepository;
   private final MissionMapper missionMapper;
   private final MissionCreatedEventFactory eventFactory;
-  private final MissionCreatedEventProducer createdEventProducer;
+  private final AfterCommitMissionDispatch afterCommitMissionDispatch;
   private final MissionHistoryRecorder missionHistoryRecorder;
-  private final MissionRealtimeNotifier missionRealtimeNotifier;
 
   public MissionCommandService(
       MissionRepository missionRepository,
       MissionMapper missionMapper,
       MissionCreatedEventFactory eventFactory,
-      MissionCreatedEventProducer createdEventProducer,
-      MissionHistoryRecorder missionHistoryRecorder,
-      MissionRealtimeNotifier missionRealtimeNotifier) {
+      AfterCommitMissionDispatch afterCommitMissionDispatch,
+      MissionHistoryRecorder missionHistoryRecorder) {
     this.missionRepository = missionRepository;
     this.missionMapper = missionMapper;
     this.eventFactory = eventFactory;
-    this.createdEventProducer = createdEventProducer;
+    this.afterCommitMissionDispatch = afterCommitMissionDispatch;
     this.missionHistoryRecorder = missionHistoryRecorder;
-    this.missionRealtimeNotifier = missionRealtimeNotifier;
   }
 
   @Transactional
@@ -67,15 +62,7 @@ public class MissionCommandService {
         MissionHistoryOrigin.API_REGISTRO);
 
     MissionCreatedKafkaEvent event = eventFactory.created(saved);
-    UUID missionId = saved.getId();
-    TransactionSynchronizationManager.registerSynchronization(
-        new TransactionSynchronization() {
-          @Override
-          public void afterCommit() {
-            createdEventProducer.publish(event);
-            missionRealtimeNotifier.notifyMissionUpdate(missionId);
-          }
-        });
+    afterCommitMissionDispatch.publishCreatedAndNotifyClients(event, saved.getId());
 
     return missionMapper.toResponse(saved);
   }
