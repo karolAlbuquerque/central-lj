@@ -1,0 +1,127 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filterBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  background: rgba(12, 18, 34, 0.55);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip:hover {
+  color: var(--text);
+  border-color: rgba(94, 176, 255, 0.35);
+}
+
+.chipActive {
+  color: var(--text);
+  border-color: rgba(94, 176, 255, 0.55);
+  background: rgba(94, 176, 255, 0.12);
+}
+
+.btnPrimary {
+  display: inline-flex;
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(62, 224, 168, 0.45);
+  background: rgba(62, 224, 168, 0.14);
+  color: var(--text);
+  font-weight: 650;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.btnPrimary:hover {
+  background: rgba(62, 224, 168, 0.22);
+}
+
+.btnGhost {
+  display: inline-flex;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  background: rgba(12, 18, 34, 0.5);
+}
+
+.btnGhost:hover {
+  border-color: rgba(94, 176, 255, 0.4);
+}
+
+.tableWrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: rgba(7, 11, 20, 0.4);
+  box-shadow: var(--shadow-card);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 14px;
+  background: rgba(17, 26, 46, 0.95);
+  color: var(--muted-dim);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+.table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(36, 48, 86, 0.45);
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.rowCrit {
+  background: rgba(255, 77, 109, 0.06);
+  box-shadow: inset 3px 0 0 rgba(255, 77, 109, 0.55);
+}
+
+.link {
+  color: var(--accent-info);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.error {
+  color: var(--accent-danger);
+  font-size: 14px;
+}

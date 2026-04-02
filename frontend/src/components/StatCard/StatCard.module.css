@@ -1,0 +1,95 @@
+.card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  min-height: 104px;
+  background: linear-gradient(145deg, rgba(24, 34, 54, 0.75), rgba(12, 18, 34, 0.65));
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent-info);
+  opacity: 0.65;
+}
+
+.default::before {
+  background: var(--accent-info);
+}
+
+.info::before {
+  background: var(--accent-cyan);
+}
+
+.gold::before {
+  background: var(--accent-gold);
+}
+
+.success::before {
+  background: var(--accent-success);
+}
+
+.warn::before {
+  background: var(--accent-warn);
+}
+
+.danger::before {
+  background: var(--accent-danger);
+}
+
+.label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+  margin-bottom: 10px;
+  padding-left: 8px;
+}
+
+.value {
+  font-size: 32px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+  padding-left: 8px;
+  line-height: 1.1;
+}
+
+.hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+  padding-left: 8px;
+}
+
+.success {
+  border-color: rgba(62, 224, 168, 0.3);
+}
+
+.warn {
+  border-color: rgba(240, 180, 41, 0.35);
+}
+
+.danger {
+  border-color: rgba(255, 77, 109, 0.4);
+}
+
+.info {
+  border-color: rgba(61, 217, 232, 0.3);
+}
+
+.gold {
+  border-color: var(--accent-gold-dim);
+}

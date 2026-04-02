@@ -1,25 +1,31 @@
 .page {
-  max-width: 560px;
+  max-width: 640px;
+}
+
+.back {
+  display: inline-flex;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(12, 18, 34, 0.5);
+}
+
+.back:hover {
+  color: var(--text);
+  border-color: rgba(94, 176, 255, 0.35);
 }
 
 .card {
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 22px 24px;
-  background: rgba(18, 26, 51, 0.5);
+  border: 1px solid rgba(94, 176, 255, 0.22);
+  border-radius: var(--radius-lg);
+  padding: 24px 26px;
+  background: linear-gradient(165deg, rgba(24, 34, 54, 0.85), rgba(12, 18, 34, 0.72));
   backdrop-filter: blur(12px);
-}
-
-.title {
-  margin: 0 0 8px;
-  font-size: 22px;
-}
-
-.hint {
-  margin: 0 0 20px;
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.5;
+  box-shadow: var(--shadow-card);
 }
 
 .form {
@@ -62,18 +68,6 @@
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.back {
-  display: inline-block;
-  margin-bottom: 16px;
-  color: var(--accent-info);
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.back:hover {
-  text-decoration: underline;
 }
 
 .error {

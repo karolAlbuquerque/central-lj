@@ -24,10 +24,10 @@ npm run dev
 Abrir `http://localhost:5173`.
 
 ## Configuração da API
-- **Desenvolvimento (padrão):** deixe `VITE_API_BASE_URL` **indefinida**. O Vite encaminha qualquer `fetch('/api/...')` para o backend (ver `vite.config.ts`).
-- **Build estático apontando para outro host:** copie `.env.example` para `.env.local` e defina `VITE_API_BASE_URL` (ex.: `http://localhost:8080`).
+- **Desenvolvimento (padrão):** deixe `VITE_API_BASE_URL` **indefinida**. O Vite encaminha qualquer `fetch('/api/...')` para o backend (ver `vite.config.ts` — também em **`preview`**).
+- **Build estático apontando para outro host:** defina `VITE_API_BASE_URL` só com a **origem**, por exemplo `http://localhost:8080`. **Não** inclua `/api` no final (senão a URL vira `/api/api/...` e o login responde **404**).
 
-Utilitário: `src/config/api.ts` (`apiUrl`).
+Utilitário: `src/config/api.ts` (`apiUrl` normaliza casos com `/api` a mais).
 
 ## Estrutura `src/`
 `assets`, `components`, `pages`, `services`, `hooks`, `routes`, `types`, `layouts`, `styles`, `config`.

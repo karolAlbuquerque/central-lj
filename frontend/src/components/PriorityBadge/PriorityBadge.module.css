@@ -1,0 +1,35 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.baixa {
+  border: 1px solid rgba(148, 160, 184, 0.4);
+  background: rgba(148, 160, 184, 0.1);
+  color: #c5cedd;
+}
+
+.media {
+  border: 1px solid rgba(94, 176, 255, 0.4);
+  background: rgba(94, 176, 255, 0.1);
+  color: #b8d9ff;
+}
+
+.alta {
+  border: 1px solid rgba(255, 200, 87, 0.45);
+  background: rgba(255, 200, 87, 0.1);
+  color: #ffe6a8;
+}
+
+.critica {
+  border: 1px solid rgba(255, 77, 109, 0.55);
+  background: linear-gradient(135deg, rgba(255, 77, 109, 0.18), rgba(120, 20, 40, 0.25));
+  color: #ffb8c8;
+  box-shadow: 0 0 14px rgba(255, 77, 109, 0.15);
+}

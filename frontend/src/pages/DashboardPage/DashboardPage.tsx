@@ -1,11 +1,14 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { MetricCard } from "../../components/MetricCard/MetricCard";
 import { N1DevTools } from "../../components/N1DevTools/N1DevTools";
+import { PageHeader } from "../../components/PageHeader/PageHeader";
+import { PriorityBadge } from "../../components/PriorityBadge/PriorityBadge";
+import { SectionCard } from "../../components/SectionCard/SectionCard";
+import { StatCard } from "../../components/StatCard/StatCard";
 import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
 import { useMissionUpdates } from "../../hooks/useMissionUpdates";
 import { api } from "../../services/api";
-import type { DashboardSummary, Mission } from "../../types/mission";
+import type { DashboardSummary, Equipe, Hero, Mission, MissionStatus } from "../../types/mission";
 import styles from "./DashboardPage.module.css";
 
 function rowClass(m: Mission): string {
@@ -14,14 +17,39 @@ function rowClass(m: Mission): string {
   return "";
 }
 
+type TableFilter = "RECENT" | MissionStatus;
+
+const FILTER_CHIPS: { id: TableFilter; label: string }[] = [
+  { id: "RECENT", label: "Recentes" },
+  { id: "RECEBIDA", label: "Recebidas" },
+  { id: "EM_ANALISE", label: "Em análise" },
+  { id: "CONCLUIDA", label: "Concluídas" },
+  { id: "FALHA_PROCESSAMENTO", label: "Falhas" }
+];
+
 export function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [emAnaliseCount, setEmAnaliseCount] = useState<number | null>(null);
+  const [heroes, setHeroes] = useState<Hero[]>([]);
+  const [teams, setTeams] = useState<Equipe[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [tableFilter, setTableFilter] = useState<TableFilter>("RECENT");
+  const [tableRows, setTableRows] = useState<Mission[]>([]);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [tableError, setTableError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const data = await api.getDashboardSummary();
+      const [data, emAnaliseRows, heroesRows, teamsRows] = await Promise.all([
+        api.getDashboardSummary(),
+        api.listMissionsByStatus("EM_ANALISE"),
+        api.listHeroes(),
+        api.listTeams()
+      ]);
       setSummary(data);
+      setEmAnaliseCount(emAnaliseRows.length);
+      setHeroes(heroesRows);
+      setTeams(teamsRows);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar painel.");
@@ -30,47 +58,196 @@ export function DashboardPage() {
 
   useMissionUpdates(load, 12000);
 
+  const heroStats = useMemo(() => {
+    const ativos = heroes.filter((h) => h.ativo);
+    return {
+      disponiveis: ativos.filter((h) => h.statusDisponibilidade === "DISPONIVEL").length,
+      emMissao: ativos.filter((h) => h.statusDisponibilidade === "EM_MISSAO").length,
+      totalAtivos: ativos.length
+    };
+  }, [heroes]);
+
+  const teamsAtivas = useMemo(() => teams.filter((t) => t.ativa).length, [teams]);
+
+  const criticas = useMemo(() => {
+    if (!summary) return [];
+    return summary.recentes.filter((m) => m.prioridade === "CRITICA" || m.prioridade === "ALTA");
+  }, [summary]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function syncTable() {
+      if (tableFilter === "RECENT") {
+        if (summary) {
+          setTableRows(summary.recentes);
+        }
+        setTableLoading(false);
+        setTableError(null);
+        return;
+      }
+      setTableLoading(true);
+      setTableError(null);
+      try {
+        const rows = await api.listMissionsByStatus(tableFilter);
+        if (!cancelled) {
+          setTableRows(rows);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setTableError(e instanceof Error ? e.message : "Falha ao filtrar.");
+        }
+      } finally {
+        if (!cancelled) {
+          setTableLoading(false);
+        }
+      }
+    }
+    void syncTable();
+    return () => {
+      cancelled = true;
+    };
+  }, [tableFilter, summary]);
+
   return (
     <div className={styles.page}>
-      <header className={styles.hero}>
-        <p className={styles.kicker}>Painel operacional</p>
-        <h1 className={styles.title}>Situação da central</h1>
-        <p className={styles.lead}>
-          Visão agregada das missões em tempo quase real. Atualizações via{" "}
-          <strong>SSE</strong> quando o consumer Kafka altera status, com polling de backup a cada 12s.
-        </p>
-        <div className={styles.actionsTop}>
+      <PageHeader
+        kicker="Painel operacional"
+        title="Situação da central"
+        description={
+          <>
+            Visão agregada em tempo quase real: <strong>SSE</strong> quando o consumer Kafka altera status,
+            com polling de backup a cada 12s. Use os filtros para isolar status na demonstração.
+          </>
+        }
+        actions={
           <Link className={styles.btnPrimary} to="/operacoes/nova">
             + Nova missão
           </Link>
-        </div>
-      </header>
+        }
+      />
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className={styles.errorBanner}>{error}</p>}
 
-      {summary && (
+      {summary && emAnaliseCount !== null ? (
         <>
-          <section className={styles.metrics}>
-            <MetricCard label="Total de missões" value={summary.totalMissaoes} />
-            <MetricCard
+          <div className={styles.metrics}>
+            <StatCard label="Total de missões" value={summary.totalMissaoes} variant="info" />
+            <StatCard
+              label="Em análise"
+              value={emAnaliseCount}
+              hint="Aguardando triagem e priorização"
+              variant="gold"
+            />
+            <StatCard
               label="Em andamento"
               value={summary.emAndamento}
-              hint="Análise, priorização, equipe ou execução"
+              hint="Pipeline operacional ativo"
               variant="warn"
             />
-            <MetricCard label="Concluídas" value={summary.concluidas} variant="success" />
-            <MetricCard label="Falhas" value={summary.falhas} variant="danger" />
-          </section>
+            <StatCard label="Concluídas" value={summary.concluidas} variant="success" />
+            <StatCard label="Falhas" value={summary.falhas} variant="danger" />
+          </div>
 
-          <section>
-            <h2 className={styles.sectionTitle}>Missões recentes</h2>
-            <p className={styles.sectionHint}>
-              Prioridade <strong>ALTA</strong> e <strong>CRÍTICA</strong> destacadas — clique no título para
-              ver histórico e linha do tempo.
-            </p>
-            {summary.recentes.length === 0 ? (
-              <p className={styles.muted}>Nenhuma missão registrada ainda.</p>
-            ) : (
+          {(summary.falhas > 0 || criticas.length > 0) && (
+            <SectionCard
+              title="Alertas e prioridades"
+              variant="alert"
+              hint="Requer atenção imediata da coordenação."
+            >
+              <ul className={styles.alertList}>
+                {summary.falhas > 0 ? (
+                  <li>
+                    <span className={styles.alertDot} data-kind="danger" />
+                    <strong>{summary.falhas}</strong> missão(ões) com falha de processamento — investigar pipeline
+                    e reprocessar se necessário.
+                  </li>
+                ) : null}
+                {criticas.length > 0 ? (
+                  <li>
+                    <span className={styles.alertDot} data-kind="warn" />
+                    <strong>{criticas.length}</strong> ocorrência(s) recente(s) com prioridade alta ou crítica na
+                    janela exibida.
+                  </li>
+                ) : null}
+              </ul>
+            </SectionCard>
+          )}
+
+          <div className={styles.twoCol}>
+            <SectionCard
+              title="Missões críticas / prioritárias"
+              variant="gold"
+              hint="Recorte das missões recentes com prioridade ALTA ou CRÍTICA."
+            >
+              {criticas.length === 0 ? (
+                <p className={styles.muted}>Nenhuma missão prioritária na lista recente.</p>
+              ) : (
+                <ul className={styles.criticalList}>
+                  {criticas.map((m) => (
+                    <li key={m.id}>
+                      <Link className={styles.missionLink} to={`/missoes/${m.id}`}>
+                        {m.titulo}
+                      </Link>
+                      <PriorityBadge prioridade={m.prioridade} />
+                      <StatusBadge status={m.status} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </SectionCard>
+
+            <SectionCard
+              title="Recursos & unidades"
+              hint="Resumo do elenco ativo e das equipes em operação."
+            >
+              <div className={styles.resourceGrid}>
+                <div className={styles.resourceItem}>
+                  <span className={styles.resourceLabel}>Heróis disponíveis</span>
+                  <span className={styles.resourceValue}>{heroStats.disponiveis}</span>
+                  <span className={styles.resourceMeta}>de {heroStats.totalAtivos} ativos</span>
+                </div>
+                <div className={styles.resourceItem}>
+                  <span className={styles.resourceLabel}>Heróis em missão</span>
+                  <span className={styles.resourceValue}>{heroStats.emMissao}</span>
+                  <span className={styles.resourceMeta}>status EM_MISSAO</span>
+                </div>
+                <div className={styles.resourceItem}>
+                  <span className={styles.resourceLabel}>Equipes ativas</span>
+                  <span className={styles.resourceValue}>{teamsAtivas}</span>
+                  <span className={styles.resourceMeta}>de {teams.length} cadastradas</span>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
+
+          <SectionCard
+            title="Lista operacional"
+            hint={
+              <>
+                Prioridade <strong>ALTA</strong> e <strong>CRÍTICA</strong> destacadas — clique no título para ver
+                histórico e linha do tempo.
+              </>
+            }
+          >
+            <div className={styles.filterBar}>
+              <span className={styles.filterLabel}>Filtro</span>
+              {FILTER_CHIPS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`${styles.chip} ${tableFilter === c.id ? styles.chipActive : ""}`}
+                  onClick={() => setTableFilter(c.id)}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+            {tableLoading && <p className={styles.tableLoading}>Carregando lista…</p>}
+            {tableError && <p className={styles.errorInline}>{tableError}</p>}
+            {!tableLoading && tableRows.length === 0 && !tableError ? (
+              <p className={styles.muted}>Nenhuma missão neste filtro.</p>
+            ) : null}
+            {tableRows.length > 0 ? (
               <div className={styles.tableWrap}>
                 <table className={styles.table}>
                   <thead>
@@ -83,14 +260,16 @@ export function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {summary.recentes.map((m) => (
+                    {tableRows.map((m) => (
                       <tr key={m.id} className={rowClass(m)}>
                         <td>
                           <Link className={styles.missionLink} to={`/missoes/${m.id}`}>
                             {m.titulo}
                           </Link>
                         </td>
-                        <td>{m.prioridade}</td>
+                        <td>
+                          <PriorityBadge prioridade={m.prioridade} />
+                        </td>
                         <td className={styles.muted}>{m.tipoAmeaca.replaceAll("_", " ")}</td>
                         <td>
                           <StatusBadge status={m.status} />
@@ -103,10 +282,12 @@ export function DashboardPage() {
                   </tbody>
                 </table>
               </div>
-            )}
-          </section>
+            ) : null}
+          </SectionCard>
         </>
-      )}
+      ) : !error ? (
+        <p className={styles.muted}>Carregando painel…</p>
+      ) : null}
 
       <N1DevTools />
     </div>

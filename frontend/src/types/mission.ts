@@ -21,12 +21,25 @@ export type TipoAmeaca =
 
 export type PrioridadeMissao = "BAIXA" | "MEDIA" | "ALTA" | "CRITICA";
 
-export type MissionHistoryOrigin = "API_REGISTRO" | "KAFKA_WORKFLOW" | "KAFKA_WORKFLOW_ERRO";
+export type MissionHistoryOrigin =
+  | "API_REGISTRO"
+  | "API_ATRIBUICAO"
+  | "KAFKA_WORKFLOW"
+  | "KAFKA_WORKFLOW_ERRO";
 
 export type LocalizacaoResponse = {
   cidade: string | null;
   bairro: string | null;
   referencia: string | null;
+};
+
+export type AtribuicaoResumo = {
+  heroiId: string | null;
+  nomeHeroico: string | null;
+  equipeId: string | null;
+  nomeEquipe: string | null;
+  atribuidoEm: string | null;
+  atribuidoPor: string | null;
 };
 
 export type Mission = {
@@ -39,6 +52,7 @@ export type Mission = {
   dataCriacao: string;
   ultimaAtualizacao: string;
   localizacao: LocalizacaoResponse | null;
+  atribuicao: AtribuicaoResumo | null;
 };
 
 export type MissionHistoryEntry = {
@@ -71,4 +85,40 @@ export type CreateMissionPayload = {
   cidade?: string | null;
   bairro?: string | null;
   referencia?: string | null;
+};
+
+export type HeroiDisponibilidade = "DISPONIVEL" | "EM_MISSAO" | "INATIVO";
+
+export type EquipeResumo = { id: string; nome: string };
+
+export type Hero = {
+  id: string;
+  nomeHeroico: string;
+  nomeCivil: string | null;
+  especialidade: string;
+  statusDisponibilidade: HeroiDisponibilidade;
+  nivel: string;
+  ativo: boolean;
+  equipe: EquipeResumo | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type HeroDetail = {
+  heroi: Hero;
+  missoes: Mission[];
+};
+
+export type Equipe = {
+  id: string;
+  nome: string;
+  especialidadePrincipal: string | null;
+  ativa: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EquipeDetail = {
+  equipe: Equipe;
+  membros: Hero[];
 };

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { PageHeader } from "../../components/PageHeader/PageHeader";
 import { api } from "../../services/api";
 import type { CreateMissionPayload, PrioridadeMissao, TipoAmeaca } from "../../types/mission";
 import styles from "./NewMissionPage.module.css";
@@ -54,16 +55,22 @@ export function NewMissionPage() {
 
   return (
     <div className={styles.page}>
-      <Link className={styles.back} to="/">
-        ← Voltar ao painel
-      </Link>
+      <PageHeader
+        kicker="Registro operacional"
+        title="Nova missão"
+        description={
+          <>
+            A ocorrência nasce como <strong>RECEBIDA</strong>, persiste no PostgreSQL e publica em{" "}
+            <code>missions.created</code>. O consumer evolui o status; acompanhe no detalhe ou no painel.
+          </>
+        }
+        actions={
+          <Link className={styles.back} to="/">
+            ← Painel
+          </Link>
+        }
+      />
       <div className={styles.card}>
-        <h1 className={styles.title}>Nova missão</h1>
-        <p className={styles.hint}>
-          A missão nasce como <strong>RECEBIDA</strong>, persiste no PostgreSQL e publica em{" "}
-          <code>missions.created</code>. O consumer evolui o status; acompanhe no detalhe ou no
-          painel.
-        </p>
         <form className={styles.form} onSubmit={(e) => void onSubmit(e)}>
           <label className={styles.field}>
             <span>Título</span>

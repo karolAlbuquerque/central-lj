@@ -1,0 +1,36 @@
+.root {
+  text-align: center;
+  padding: 40px 24px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  background: rgba(7, 11, 20, 0.35);
+}
+
+.icon {
+  font-size: 28px;
+  line-height: 1;
+  color: var(--accent-gold);
+  margin-bottom: 14px;
+  opacity: 0.9;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.hint {
+  margin: 0 auto;
+  max-width: 42ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.action {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}

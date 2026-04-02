@@ -1,0 +1,144 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(94, 176, 255, 0.45);
+  background: rgba(94, 176, 255, 0.12);
+  color: var(--text);
+  font-weight: 650;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.btnPrimary:hover {
+  background: rgba(94, 176, 255, 0.2);
+}
+
+.btnGhost {
+  display: inline-flex;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  background: rgba(12, 18, 34, 0.5);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, rgba(24, 34, 54, 0.88), rgba(12, 18, 34, 0.72));
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: rgba(212, 168, 83, 0.35);
+  transform: translateY(-2px);
+}
+
+.cardInactive {
+  opacity: 0.72;
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.heroName {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.heroName:hover {
+  color: var(--accent-info);
+}
+
+.inactiveTag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.spec {
+  margin: 0;
+  font-size: 14px;
+  color: var(--accent-cyan);
+}
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.rowLabel {
+  color: var(--muted-dim);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rowValue {
+  color: var(--muted);
+  text-align: right;
+}
+
+.inlineLink {
+  color: var(--accent-info);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+.cardCta {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent-gold);
+  text-decoration: none;
+}
+
+.cardCta:hover {
+  color: #e8c066;
+}
+
+.error {
+  color: var(--accent-danger);
+}

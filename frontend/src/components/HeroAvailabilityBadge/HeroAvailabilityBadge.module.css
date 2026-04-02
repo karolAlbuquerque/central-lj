@@ -1,0 +1,27 @@
+.badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.disp {
+  border: 1px solid rgba(46, 229, 157, 0.45);
+  color: #b8ffe8;
+  background: rgba(46, 229, 157, 0.1);
+}
+
+.missao {
+  border: 1px solid rgba(255, 200, 87, 0.45);
+  color: #ffe3a8;
+  background: rgba(255, 200, 87, 0.12);
+}
+
+.inat {
+  border: 1px solid rgba(170, 179, 197, 0.45);
+  color: var(--muted);
+  background: rgba(18, 26, 51, 0.4);
+}

@@ -1,0 +1,122 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(62, 224, 168, 0.4);
+  background: rgba(62, 224, 168, 0.12);
+  color: var(--text);
+  font-weight: 650;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.btnPrimary:hover {
+  background: rgba(62, 224, 168, 0.2);
+}
+
+.btnGhost {
+  display: inline-flex;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  background: rgba(12, 18, 34, 0.5);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: linear-gradient(165deg, rgba(24, 34, 54, 0.85), rgba(12, 18, 34, 0.7));
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.card:hover {
+  border-color: rgba(62, 224, 168, 0.3);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.teamName {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.teamName:hover {
+  color: var(--accent-success);
+}
+
+.badgeOn {
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(62, 224, 168, 0.15);
+  border: 1px solid rgba(62, 224, 168, 0.4);
+  color: #b8ffe8;
+}
+
+.badgeOff {
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(148, 160, 184, 0.1);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.spec {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.cardCta {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent-info);
+  text-decoration: none;
+}
+
+.cardCta:hover {
+  text-decoration: underline;
+}
+
+.error {
+  color: var(--accent-danger);
+}

@@ -8,6 +8,7 @@
   color: var(--accent-info);
   text-decoration: none;
   font-size: 14px;
+  font-weight: 600;
   width: fit-content;
 }
 
@@ -16,6 +17,13 @@
 }
 
 .grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.lowerGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
@@ -23,23 +31,68 @@
 }
 
 @media (max-width: 900px) {
-  .grid {
+  .lowerGrid {
     grid-template-columns: 1fr;
   }
 }
 
 .panel {
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 22px 24px;
-  background: rgba(18, 26, 51, 0.5);
+  border-radius: var(--radius-lg);
+  padding: 24px 26px;
+  background: linear-gradient(165deg, rgba(24, 34, 54, 0.82), rgba(12, 18, 34, 0.65));
   backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-card);
+}
+
+.panelHero {
+  grid-column: 1 / -1;
+  border-color: rgba(212, 168, 83, 0.35);
+  background: linear-gradient(
+    165deg,
+    rgba(212, 168, 83, 0.07),
+    rgba(24, 34, 54, 0.85) 38%,
+    rgba(12, 18, 34, 0.72)
+  );
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .title {
-  margin: 0 0 12px;
-  font-size: 24px;
-  line-height: 1.25;
+  margin: 0;
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.threatPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid rgba(61, 217, 232, 0.4);
+  background: rgba(61, 217, 232, 0.1);
+  color: #b8f4fa;
 }
 
 .meta {
@@ -56,75 +109,84 @@
 }
 
 .desc {
-  margin-top: 16px;
+  margin-top: 18px;
   font-size: 15px;
   line-height: 1.55;
   color: var(--text);
 }
 
-.sectionTitle {
-  margin: 0 0 6px;
-  font-size: 16px;
-  font-weight: 650;
-}
-
-.sectionHint {
-  margin: 0 0 18px;
+.inlineHint {
+  margin: 0;
   font-size: 13px;
   color: var(--muted);
 }
 
-.timeline {
-  position: relative;
-  padding-left: 20px;
-  border-left: 2px solid rgba(77, 163, 255, 0.35);
-  margin-left: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.item {
-  position: relative;
-  padding-left: 8px;
-}
-
-.item::before {
-  content: "";
-  position: absolute;
-  left: -25px;
-  top: 4px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent-info);
-  box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.2);
-}
-
-.itemOrigemApi::before {
-  background: var(--accent-success);
-}
-
-.itemOrigemErro::before {
-  background: var(--accent-danger);
-}
-
-.time {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-
-.msg {
+.assignCurrent {
+  margin-bottom: 16px;
   font-size: 14px;
   color: var(--text);
-  margin: 0 0 6px;
-  line-height: 1.45;
 }
 
-.transition {
-  font-size: 12px;
+.heroLink {
   color: var(--accent-info);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.heroLink:hover {
+  text-decoration: underline;
+}
+
+.assignRows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+}
+
+.assignRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.assignLbl {
+  min-width: 100px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.select,
+.input {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(7, 11, 20, 0.55);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.btnAssign {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(94, 176, 255, 0.45);
+  background: rgba(94, 176, 255, 0.12);
+  color: var(--text);
+  font-weight: 650;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btnAssign:hover:not(:disabled) {
+  background: rgba(94, 176, 255, 0.2);
+}
+
+.btnAssign:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .error {
@@ -132,8 +194,8 @@
 }
 
 .mono {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--muted);
-  margin-top: 12px;
+  color: var(--muted-dim);
+  margin-top: 14px;
 }

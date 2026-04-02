@@ -1,0 +1,65 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.item {
+  position: relative;
+  padding: 14px 16px 16px 18px;
+  border-left: 2px solid rgba(94, 176, 255, 0.35);
+  margin-left: 8px;
+  background: rgba(7, 11, 20, 0.25);
+  border-bottom: 1px solid var(--border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemOrigemApi {
+  border-left-color: rgba(94, 176, 255, 0.7);
+}
+
+.itemOrigemAtrib {
+  border-left-color: rgba(212, 168, 83, 0.75);
+}
+
+.itemOrigemKafka {
+  border-left-color: rgba(62, 224, 168, 0.65);
+}
+
+.itemOrigemErro {
+  border-left-color: rgba(255, 77, 109, 0.85);
+  background: rgba(255, 77, 109, 0.05);
+}
+
+.time {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--muted-dim);
+  margin-bottom: 6px;
+}
+
+.msg {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.transition {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tag {
+  font-size: 12px;
+  color: var(--muted-dim);
+}
+
+.empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
