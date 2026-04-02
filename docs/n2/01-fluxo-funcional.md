@@ -1,4 +1,4 @@
-# N2 — Fluxo funcional (evoluído)
+# N2 — Fluxo funcional (fechamento)
 
 ## Visão do fluxo real
 
@@ -21,26 +21,28 @@ sequenceDiagram
     C->>DB: UPDATE status + INSERT mission_history
     B-->>F: SSE mission-update
   end
-  F->>B: GET dashboard / detalhe (ou só SSE)
+  F->>B: GET dashboard / detalhe / histórico
 ```
 
-1. **Criação:** `POST /api/missions` persiste **missão** (RECEBIDA) e primeira linha em **`mission_history`** (origem `API_REGISTRO`).
-2. **Kafka:** após commit, publica **`MISSION_CREATED`** em **`missions.created`** e notifica clientes **SSE** (`MissionRealtimeNotifier`).
-3. **Consumer:** `MissionWorkflowService` aplica a **Strategy** (fluxo completo ou crítico), grava cada transição em **`mission_history`** (origem `KAFKA_WORKFLOW`) e dispara **SSE** a cada passo.
+1. **Criação:** `POST /api/missions` persiste **missão** (`RECEBIDA`) e primeira linha em **`mission_history`** (origem `API_REGISTRO`).
+2. **Kafka:** após **commit** da transação, **`AfterCommitMissionDispatch`** publica **`MISSION_CREATED`** em **`missions.created`** e chama **`MissionRealtimeNotifier`** (SSE).
+3. **Consumer:** `MissionCreatedConsumer` delega a **`MissionCreatedEventIngestionService`** (parse + validação do envelope); em seguida **`MissionWorkflowService`** aplica a **Strategy**, grava cada transição em **`mission_history`** (`KAFKA_WORKFLOW`) e dispara **SSE** a cada passo.
 4. **Falha:** `markFailure` grava **FALHA_PROCESSAMENTO** + histórico (`KAFKA_WORKFLOW_ERRO`) e notifica.
-5. **Frontend:** **SSE** em `/api/missions/stream` (evento `mission-update`) + **polling de backup** (12s) e refresh ao focar a aba.
+5. **Frontend:** **SSE** em `/api/missions/stream` + **polling** (12s) e refresh ao focar a aba.
 
 ## Estados
 
 - Padrão: **RECEBIDA → EM_ANALISE → PRIORIZADA → EQUIPE_DESIGNADA → EM_ANDAMENTO → CONCLUIDA**.
-- **CRÍTICA:** sem **EM_ANALISE** no primeiro passo do pipeline.
-- Erro: **FALHA_PROCESSAMENTO**.
+- **CRÍTICA:** o primeiro passo após **RECEBIDA** é **PRIORIZADA** (pula **EM_ANALISE** na sequência definida pela strategy).
+- Erro operacional do pipeline: **FALHA_PROCESSAMENTO**.
 
 ## Consultas principais
 
 - **Painel:** `GET /api/missions/dashboard/summary` (métricas + recentes).
-- **Detalhe + timeline:** `GET /api/missions/{id}` → `MissionDetailResponse` (`missao` + `historico` ordenado por tempo).
+- **Detalhe + timeline:** `GET /api/missions/{id}` → `missao` + `historico` ordenado por tempo.
+- **Só timeline (demo/API leve):** `GET /api/missions/{id}/history`.
+- **Filtro demo:** `GET /api/missions/status/{status}` (enum `MissionStatus`).
 
-## Fora de escopo
+## Fora de escopo N2
 
-- Autenticação; WebSocket (usamos **SSE** unidirecional); fidelidade 100% ao Figma (vide `05-ui-e-dashboard.md`).
+- Autenticação; WebSocket (usa-se **SSE**); fidelidade 100% ao Figma (vide `05-ui-e-dashboard.md`).

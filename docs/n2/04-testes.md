@@ -1,30 +1,47 @@
-# N2 — Testes automatizados
+# N2 — Testes automatizados (fechamento)
 
-## O que existe hoje
+## Suítes
 
 | Suíte | Objetivo |
-|-------|-----------|
-| `SmokeTest` | Sobe o contexto Spring no perfil `test` (H2, Kafka consumer off). |
-| `MissionApiIntegrationTest` | **MockMvc**: health; **POST /api/missions** com corpo válido (producer Kafka **mockado**); verifica detalhe com **histórico**; **GET /dashboard/summary**; **404** em id inexistente. |
-| `MissionWorkflowIntegrationTest` | **Sem** Kafka: insere missão **RECEBIDA** no repositório, roda `MissionWorkflowService.processAfterCreation`; assert **CONCLUIDA** e **5** linhas de histórico; fluxo **CRÍTICA** (primeiro passo **PRIORIZADA**); **`markFailure`** grava **FALHA** + histórico. |
+|-------|----------|
+| `SmokeTest` | Sobe o contexto Spring no perfil `test` (H2, consumer Kafka off). |
+| `MissionApiIntegrationTest` | **MockMvc:** health; **POST /api/missions** válido (producer mockado **via `@MockitoBean`**); detalhe + histórico (incl. `atribuicao` nula); **dashboard**; **404**; **400** validação; **GET /recent**; **GET /status/{status}**; **400** status inválido; **GET /{id}/history**; **404** histórico inexistente. |
+| `HeroEquipeAssignmentApiIntegrationTest` | **MockMvc:** **POST /api/teams** e **POST /api/heroes**; **PATCH** `assign-hero` / `assign-team`; detalhe com **API_ATRIBUICAO** no histórico; **GET /api/heroes/{id}/missions** após designação de herói. |
+| `AuthApiIntegrationTest` | **MockMvc** com **`central-lj.security.enabled=true`** e seed demo: login inválido **401**; login admin + **GET /api/auth/me**; fluxo admin cria missão + `assign-hero` para herói demo; login herói + **GET /api/me/missions** + detalhe da missão; herói recebe **403** em **GET /api/missions**. |
+| `MissionWorkflowIntegrationTest` | Sem Kafka: `processAfterCreation` até **CONCLUIDA** + histórico; fluxo **CRÍTICA**; **`markFailure`**. |
+| `MissionCreatedEventIngestionServiceTest` | Unitário: JSON válido delega workflow; ignora tipo inválido / `missionId` nulo. |
+| `MissionProcessingFlowStrategyResolverTest` | Unitário: **CRÍTICA** vs demais prioridades. |
+| `AfterCommitMissionDispatchTest` | Unitário: sem transação ativa, publica e notifica imediatamente. |
 
 ## Tipos de teste
 
-- **Integração (Spring Boot):** API + JPA + transações reais em H2.
-- **Unitário leve:** pré-requisitos de domínio cobertos pelos testes acima; mocks apenas do **producer** Kafka onde o broker não é necessário.
+- **Integração:** API + JPA + transações reais em H2.
+- **Unitário:** ingestão Kafka, strategy resolver, dispatch pós-commit.
 
 ## Como executar
 
 Na pasta `backend/`:
 
-```bash
-mvn test
+```powershell
+.\mvnw.cmd test
 ```
 
-Perfil activo: `test` (`src/test/resources/application-test.yml`) — Flyway **desligado**, Hibernate **`create-drop`**, **`workflow-step-delay-ms: 0`**.
+(Linux/macOS: `./mvnw test`. Se preferir Maven instalado globalmente: `mvn test`.)
 
-## O que falta (evolução)
+Perfil **`test`** (`application-test.yml`): Flyway **off**, Hibernate **`create-drop`**, **`workflow-step-delay-ms: 0`**, **`central-lj.kafka.consumer-enabled: false`**.
 
-- **Testcontainers** (Postgres + opcional Kafka) no CI.
-- Teste **E2E** (Playwright) do fluxo painel → criar → ver timeline.
-- Cobertura de **SSE** (opcional, mais frágil em CI).
+## Cobertura (JaCoCo)
+
+Após os testes:
+
+```text
+backend/target/site/jacoco/index.html
+```
+
+Útil para **banca** como evidência rápida de cobertura; não é obrigação de meta percentual rígida na N2.
+
+## Evoluções futuras (fora do escopo N2)
+
+- **Testcontainers** (Postgres + Kafka) no CI.
+- **E2E** (Playwright) painel → criar → timeline.
+- Teste automatizado de **SSE** (mais frágil em CI).

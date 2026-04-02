@@ -1,12 +1,20 @@
-# Pasta `docs/entrega/` — Entrega e apresentação N1
+# Pasta `docs/entrega/` — Entrega e apresentação
 
-Material para **fechar a N1**, orientar avaliadores e ensaiar a **apresentação**.
+## N1
 
 | Arquivo | Uso |
 |---------|-----|
 | [checklist-n1.md](checklist-n1.md) | Verificação antes de entregar |
 | [resumo-entrega-n1.md](resumo-entrega-n1.md) | Uma página para professor ou revisor |
-| [artefatos-n1.md](artefatos-n1.md) | Mapa de todos os artefatos e onde abrir na banca |
-| [ordem-apresentacao.md](ordem-apresentacao.md) | Sequência prática ~5 min + divisão em grupo |
+| [artefatos-n1.md](artefatos-n1.md) | Mapa de artefatos N1 |
+| [ordem-apresentacao.md](ordem-apresentacao.md) | Sequência prática N1 |
 
-Narrativa técnica detalhada continua em `../n1/`. Arquitetura em `../arquitetura/`. Próxima fase em `../n1/transicao-para-n2.md`.
+## N2 — banca final
+
+| Arquivo | Uso |
+|---------|-----|
+| [resumo-final-n2.md](resumo-final-n2.md) | Visão geral da entrega N2 |
+| [checklist-banca-final.md](checklist-banca-final.md) | Checklist pré-banca |
+| [roteiro-demo-final.md](roteiro-demo-final.md) | Demo 7–10 minutos |
+
+Narrativa N2: `../n2/`. Inclui [preparação para banca](../n2/06-preparacao-banca.md).
