@@ -1,6 +1,7 @@
 package br.edu.central.centrallj.service;
 
 import br.edu.central.centrallj.domain.Heroi;
+import br.edu.central.centrallj.application.port.in.heroes.HeroUseCase;
 import br.edu.central.centrallj.dto.CreateHeroRequest;
 import br.edu.central.centrallj.dto.HeroDetailResponse;
 import br.edu.central.centrallj.dto.HeroMapper;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class HeroiService {
+public class HeroiService implements HeroUseCase {
 
   private final HeroiRepository heroiRepository;
   private final EquipeHeroicaService equipeHeroicaService;

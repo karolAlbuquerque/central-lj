@@ -1,7 +1,7 @@
 package br.edu.central.centrallj.messaging.ingestion;
 
+import br.edu.central.centrallj.application.port.in.missions.ProcessMissionAfterCreationUseCase;
 import br.edu.central.centrallj.messaging.event.MissionCreatedKafkaEvent;
-import br.edu.central.centrallj.service.MissionWorkflowService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -21,12 +21,12 @@ public class MissionCreatedEventIngestionService {
   private static final Logger log = LoggerFactory.getLogger(MissionCreatedEventIngestionService.class);
 
   private final ObjectMapper objectMapper;
-  private final MissionWorkflowService missionWorkflowService;
+  private final ProcessMissionAfterCreationUseCase processAfterCreation;
 
   public MissionCreatedEventIngestionService(
-      ObjectMapper objectMapper, MissionWorkflowService missionWorkflowService) {
+      ObjectMapper objectMapper, ProcessMissionAfterCreationUseCase processAfterCreation) {
     this.objectMapper = objectMapper;
-    this.missionWorkflowService = missionWorkflowService;
+    this.processAfterCreation = processAfterCreation;
   }
 
   /** Entrada principal: payload JSON bruto entregue pelo broker. */
@@ -47,6 +47,6 @@ public class MissionCreatedEventIngestionService {
       log.warn("[Central-LJ][Kafka] Tipo inesperado em missions.created: {}", event.type());
       return;
     }
-    missionWorkflowService.processAfterCreation(event.missionId());
+    processAfterCreation.processAfterCreation(event.missionId());
   }
 }

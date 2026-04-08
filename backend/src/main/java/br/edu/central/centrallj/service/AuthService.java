@@ -1,6 +1,8 @@
 package br.edu.central.centrallj.service;
 
 import br.edu.central.centrallj.domain.Usuario;
+import br.edu.central.centrallj.application.port.in.auth.GetCurrentUserUseCase;
+import br.edu.central.centrallj.application.port.in.auth.LoginUseCase;
 import br.edu.central.centrallj.dto.AuthUserResponse;
 import br.edu.central.centrallj.dto.LoginRequest;
 import br.edu.central.centrallj.dto.LoginResponse;
@@ -14,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AuthService {
+public class AuthService implements LoginUseCase, GetCurrentUserUseCase {
 
   private final UsuarioRepository usuarioRepository;
   private final PasswordEncoder passwordEncoder;

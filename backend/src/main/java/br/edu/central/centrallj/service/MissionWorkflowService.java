@@ -1,5 +1,6 @@
 package br.edu.central.centrallj.service;
 
+import br.edu.central.centrallj.application.port.in.missions.ProcessMissionAfterCreationUseCase;
 import br.edu.central.centrallj.domain.Mission;
 import br.edu.central.centrallj.domain.MissionHistoryOrigin;
 import br.edu.central.centrallj.domain.MissionStatus;
@@ -16,7 +17,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
-public class MissionWorkflowService {
+public class MissionWorkflowService implements ProcessMissionAfterCreationUseCase {
 
   private static final Logger log = LoggerFactory.getLogger(MissionWorkflowService.class);
 
@@ -46,6 +47,7 @@ public class MissionWorkflowService {
    * Executado pelo consumer Kafka: evolui a missão a partir de {@link MissionStatus#RECEBIDA}. Idempotente
    * se o status já tiver avançado (reentrega de mensagem).
    */
+  @Override
   public void processAfterCreation(UUID missionId) {
     Mission initial = missionRepository.findById(missionId).orElse(null);
     if (initial == null) {

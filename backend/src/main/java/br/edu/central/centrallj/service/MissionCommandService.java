@@ -3,12 +3,13 @@ package br.edu.central.centrallj.service;
 import br.edu.central.centrallj.domain.Mission;
 import br.edu.central.centrallj.domain.MissionHistoryOrigin;
 import br.edu.central.centrallj.domain.MissionStatus;
+import br.edu.central.centrallj.application.port.in.missions.CreateMissionUseCase;
+import br.edu.central.centrallj.application.port.out.MissionPostCommitDispatchPort;
 import br.edu.central.centrallj.dto.CreateMissionRequest;
 import br.edu.central.centrallj.dto.MissionMapper;
 import br.edu.central.centrallj.dto.MissionResponse;
 import br.edu.central.centrallj.messaging.event.MissionCreatedEventFactory;
 import br.edu.central.centrallj.messaging.event.MissionCreatedKafkaEvent;
-import br.edu.central.centrallj.messaging.support.AfterCommitMissionDispatch;
 import br.edu.central.centrallj.repository.MissionRepository;
 import java.time.Instant;
 import java.util.UUID;
@@ -16,28 +17,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class MissionCommandService {
+public class MissionCommandService implements CreateMissionUseCase {
 
   private final MissionRepository missionRepository;
   private final MissionMapper missionMapper;
   private final MissionCreatedEventFactory eventFactory;
-  private final AfterCommitMissionDispatch afterCommitMissionDispatch;
+  private final MissionPostCommitDispatchPort postCommitDispatch;
   private final MissionHistoryRecorder missionHistoryRecorder;
 
   public MissionCommandService(
       MissionRepository missionRepository,
       MissionMapper missionMapper,
       MissionCreatedEventFactory eventFactory,
-      AfterCommitMissionDispatch afterCommitMissionDispatch,
+      MissionPostCommitDispatchPort postCommitDispatch,
       MissionHistoryRecorder missionHistoryRecorder) {
     this.missionRepository = missionRepository;
     this.missionMapper = missionMapper;
     this.eventFactory = eventFactory;
-    this.afterCommitMissionDispatch = afterCommitMissionDispatch;
+    this.postCommitDispatch = postCommitDispatch;
     this.missionHistoryRecorder = missionHistoryRecorder;
   }
 
   @Transactional
+  @Override
   public MissionResponse create(CreateMissionRequest request) {
     Instant now = Instant.now();
     Mission m = new Mission();
@@ -62,7 +64,7 @@ public class MissionCommandService {
         MissionHistoryOrigin.API_REGISTRO);
 
     MissionCreatedKafkaEvent event = eventFactory.created(saved);
-    afterCommitMissionDispatch.publishCreatedAndNotifyClients(event, saved.getId());
+    postCommitDispatch.publishCreatedAndNotifyClients(event, saved.getId());
 
     return missionMapper.toResponse(saved);
   }

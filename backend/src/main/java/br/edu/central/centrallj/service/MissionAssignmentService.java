@@ -5,6 +5,7 @@ import br.edu.central.centrallj.domain.Heroi;
 import br.edu.central.centrallj.domain.HeroiDisponibilidade;
 import br.edu.central.centrallj.domain.Mission;
 import br.edu.central.centrallj.domain.MissionHistoryOrigin;
+import br.edu.central.centrallj.application.port.in.missions.AssignMissionUseCase;
 import br.edu.central.centrallj.dto.AssignHeroRequest;
 import br.edu.central.centrallj.dto.AssignTeamRequest;
 import br.edu.central.centrallj.dto.MissionMapper;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class MissionAssignmentService {
+public class MissionAssignmentService implements AssignMissionUseCase {
 
   private static final String ATRIB_PADRAO = "Coordenação";
 

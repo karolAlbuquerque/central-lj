@@ -1,6 +1,7 @@
 package br.edu.central.centrallj.service;
 
 import br.edu.central.centrallj.domain.EquipeHeroica;
+import br.edu.central.centrallj.application.port.in.teams.TeamUseCase;
 import br.edu.central.centrallj.dto.CreateEquipeRequest;
 import br.edu.central.centrallj.dto.EquipeDetailResponse;
 import br.edu.central.centrallj.dto.EquipeMapper;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class EquipeHeroicaService {
+public class EquipeHeroicaService implements TeamUseCase {
 
   private final EquipeHeroicaRepository equipeHeroicaRepository;
   private final HeroiRepository heroiRepository;

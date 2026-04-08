@@ -3,7 +3,7 @@ package br.edu.central.centrallj.controller;
 import br.edu.central.centrallj.domain.UserRole;
 import br.edu.central.centrallj.dto.MissionResponse;
 import br.edu.central.centrallj.security.UsuarioPrincipal;
-import br.edu.central.centrallj.service.HeroiService;
+import br.edu.central.centrallj.application.port.in.heroes.HeroUseCase;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/me")
 public class MeController {
 
-  private final HeroiService heroiService;
+  private final HeroUseCase heroUseCase;
 
-  public MeController(HeroiService heroiService) {
-    this.heroiService = heroiService;
+  public MeController(HeroUseCase heroUseCase) {
+    this.heroUseCase = heroUseCase;
   }
 
   /**
@@ -33,7 +33,7 @@ public class MeController {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     if (principal.role() == UserRole.HERO && principal.heroiId() != null) {
-      return ResponseEntity.ok(heroiService.listMissionsForHero(principal.heroiId()));
+      return ResponseEntity.ok(heroUseCase.listMissionsForHero(principal.heroiId()));
     }
     return ResponseEntity.ok(List.of());
   }

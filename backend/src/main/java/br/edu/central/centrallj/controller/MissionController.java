@@ -1,5 +1,8 @@
 package br.edu.central.centrallj.controller;
 
+import br.edu.central.centrallj.application.port.in.missions.AssignMissionUseCase;
+import br.edu.central.centrallj.application.port.in.missions.CreateMissionUseCase;
+import br.edu.central.centrallj.application.port.in.missions.MissionQueryUseCase;
 import br.edu.central.centrallj.domain.MissionStatus;
 import br.edu.central.centrallj.dto.AssignHeroRequest;
 import br.edu.central.centrallj.dto.AssignTeamRequest;
@@ -11,9 +14,6 @@ import br.edu.central.centrallj.dto.MissionResponse;
 import br.edu.central.centrallj.exception.BadRequestException;
 import br.edu.central.centrallj.security.MissionViewPolicy;
 import br.edu.central.centrallj.security.UsuarioPrincipal;
-import br.edu.central.centrallj.service.MissionAssignmentService;
-import br.edu.central.centrallj.service.MissionCommandService;
-import br.edu.central.centrallj.service.MissionQueryService;
 import br.edu.central.centrallj.service.MissionRealtimeNotifier;
 import jakarta.validation.Valid;
 import java.time.Duration;
@@ -40,21 +40,21 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @Validated
 public class MissionController {
 
-  private final MissionCommandService missionCommandService;
-  private final MissionQueryService missionQueryService;
-  private final MissionAssignmentService missionAssignmentService;
+  private final CreateMissionUseCase createMission;
+  private final MissionQueryUseCase missionQuery;
+  private final AssignMissionUseCase assignMission;
   private final MissionRealtimeNotifier missionRealtimeNotifier;
   private final MissionViewPolicy missionViewPolicy;
 
   public MissionController(
-      MissionCommandService missionCommandService,
-      MissionQueryService missionQueryService,
-      MissionAssignmentService missionAssignmentService,
+      CreateMissionUseCase createMission,
+      MissionQueryUseCase missionQuery,
+      AssignMissionUseCase assignMission,
       MissionRealtimeNotifier missionRealtimeNotifier,
       MissionViewPolicy missionViewPolicy) {
-    this.missionCommandService = missionCommandService;
-    this.missionQueryService = missionQueryService;
-    this.missionAssignmentService = missionAssignmentService;
+    this.createMission = createMission;
+    this.missionQuery = missionQuery;
+    this.assignMission = assignMission;
     this.missionRealtimeNotifier = missionRealtimeNotifier;
     this.missionViewPolicy = missionViewPolicy;
   }
@@ -62,7 +62,7 @@ public class MissionController {
   @GetMapping("/dashboard/summary")
   @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
   public DashboardSummaryResponse dashboardSummary() {
-    return missionQueryService.dashboardSummary();
+    return missionQuery.dashboardSummary();
   }
 
   @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -74,19 +74,19 @@ public class MissionController {
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
   public ResponseEntity<MissionResponse> create(@Valid @RequestBody CreateMissionRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(missionCommandService.create(request));
+    return ResponseEntity.status(HttpStatus.CREATED).body(createMission.create(request));
   }
 
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
   public List<MissionResponse> list() {
-    return missionQueryService.listAll();
+    return missionQuery.listAll();
   }
 
   @GetMapping("/recent")
   @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
   public List<MissionResponse> recent() {
-    return missionQueryService.recentMissions();
+    return missionQuery.recentMissions();
   }
 
   @GetMapping("/status/{status}")
@@ -94,7 +94,7 @@ public class MissionController {
   public List<MissionResponse> listByStatus(@PathVariable String status) {
     try {
       MissionStatus st = MissionStatus.valueOf(status.toUpperCase(Locale.ROOT));
-      return missionQueryService.listByStatus(st);
+      return missionQuery.listByStatus(st);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException("Status inválido: " + status);
     }
@@ -104,16 +104,16 @@ public class MissionController {
   @PreAuthorize("isAuthenticated()")
   public List<MissionHistoryEntryResponse> getHistory(
       @PathVariable UUID id, @AuthenticationPrincipal UsuarioPrincipal principal) {
-    MissionDetailResponse detail = missionQueryService.getDetail(id);
+    MissionDetailResponse detail = missionQuery.getDetail(id);
     missionViewPolicy.assertCanView(principal, detail.missao());
-    return missionQueryService.getHistory(id);
+    return missionQuery.getHistory(id);
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("isAuthenticated()")
   public MissionDetailResponse getDetail(
       @PathVariable UUID id, @AuthenticationPrincipal UsuarioPrincipal principal) {
-    MissionDetailResponse detail = missionQueryService.getDetail(id);
+    MissionDetailResponse detail = missionQuery.getDetail(id);
     missionViewPolicy.assertCanView(principal, detail.missao());
     return detail;
   }
@@ -122,13 +122,13 @@ public class MissionController {
   @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
   public MissionResponse assignHero(
       @PathVariable UUID id, @Valid @RequestBody AssignHeroRequest request) {
-    return missionAssignmentService.assignHero(id, request);
+    return assignMission.assignHero(id, request);
   }
 
   @PatchMapping("/{id}/assign-team")
   @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
   public MissionResponse assignTeam(
       @PathVariable UUID id, @Valid @RequestBody AssignTeamRequest request) {
-    return missionAssignmentService.assignTeam(id, request);
+    return assignMission.assignTeam(id, request);
   }
 }

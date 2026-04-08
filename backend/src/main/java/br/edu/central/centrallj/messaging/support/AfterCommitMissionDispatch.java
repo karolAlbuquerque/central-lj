@@ -1,5 +1,6 @@
 package br.edu.central.centrallj.messaging.support;
 
+import br.edu.central.centrallj.application.port.out.MissionPostCommitDispatchPort;
 import br.edu.central.centrallj.messaging.event.MissionCreatedKafkaEvent;
 import br.edu.central.centrallj.messaging.producer.MissionCreatedEventProducer;
 import br.edu.central.centrallj.service.MissionRealtimeNotifier;
@@ -13,7 +14,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * que persiste a missão — evita inconsistência se a transação falhar após um envio prematuro.
  */
 @Component
-public class AfterCommitMissionDispatch {
+public class AfterCommitMissionDispatch implements MissionPostCommitDispatchPort {
 
   private final MissionCreatedEventProducer createdEventProducer;
   private final MissionRealtimeNotifier missionRealtimeNotifier;
@@ -25,6 +26,7 @@ public class AfterCommitMissionDispatch {
     this.missionRealtimeNotifier = missionRealtimeNotifier;
   }
 
+  @Override
   public void publishCreatedAndNotifyClients(MissionCreatedKafkaEvent event, UUID missionId) {
     if (!TransactionSynchronizationManager.isSynchronizationActive()) {
       createdEventProducer.publish(event);

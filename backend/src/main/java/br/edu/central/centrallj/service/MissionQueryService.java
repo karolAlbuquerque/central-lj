@@ -1,6 +1,7 @@
 package br.edu.central.centrallj.service;
 
 import br.edu.central.centrallj.domain.MissionStatus;
+import br.edu.central.centrallj.application.port.in.missions.MissionQueryUseCase;
 import br.edu.central.centrallj.dto.DashboardSummaryResponse;
 import br.edu.central.centrallj.dto.MissionDetailResponse;
 import br.edu.central.centrallj.dto.MissionHistoryEntryResponse;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class MissionQueryService {
+public class MissionQueryService implements MissionQueryUseCase {
 
   private static final List<MissionStatus> EM_ANDAMENTO_STATUS =
       List.of(

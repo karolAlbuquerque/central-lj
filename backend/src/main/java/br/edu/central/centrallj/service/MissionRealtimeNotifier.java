@@ -1,5 +1,6 @@
 package br.edu.central.centrallj.service;
 
+import br.edu.central.centrallj.application.port.out.MissionRealtimeNotifierPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -16,7 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * Notificação leve para o front (SSE) quando uma missão muda — complementa o polling de fallback.
  */
 @Service
-public class MissionRealtimeNotifier {
+public class MissionRealtimeNotifier implements MissionRealtimeNotifierPort {
 
   private static final Logger log = LoggerFactory.getLogger(MissionRealtimeNotifier.class);
 
@@ -43,6 +44,7 @@ public class MissionRealtimeNotifier {
     return emitter;
   }
 
+  @Override
   public void notifyMissionUpdate(UUID missionId) {
     if (emitters.isEmpty()) {
       return;

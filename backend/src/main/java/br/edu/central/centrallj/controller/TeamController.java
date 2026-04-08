@@ -1,9 +1,9 @@
 package br.edu.central.centrallj.controller;
 
+import br.edu.central.centrallj.application.port.in.teams.TeamUseCase;
 import br.edu.central.centrallj.dto.CreateEquipeRequest;
 import br.edu.central.centrallj.dto.EquipeDetailResponse;
 import br.edu.central.centrallj.dto.EquipeResponse;
-import br.edu.central.centrallj.service.EquipeHeroicaService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -24,24 +24,24 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('ADMIN','OPERATOR')")
 public class TeamController {
 
-  private final EquipeHeroicaService equipeHeroicaService;
+  private final TeamUseCase teamUseCase;
 
-  public TeamController(EquipeHeroicaService equipeHeroicaService) {
-    this.equipeHeroicaService = equipeHeroicaService;
+  public TeamController(TeamUseCase teamUseCase) {
+    this.teamUseCase = teamUseCase;
   }
 
   @PostMapping
   public ResponseEntity<EquipeResponse> create(@Valid @RequestBody CreateEquipeRequest request) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(equipeHeroicaService.create(request));
+    return ResponseEntity.status(HttpStatus.CREATED).body(teamUseCase.create(request));
   }
 
   @GetMapping
   public List<EquipeResponse> list() {
-    return equipeHeroicaService.listAll();
+    return teamUseCase.listAll();
   }
 
   @GetMapping("/{id}")
   public EquipeDetailResponse getDetail(@PathVariable UUID id) {
-    return equipeHeroicaService.getDetail(id);
+    return teamUseCase.getDetail(id);
   }
 }
