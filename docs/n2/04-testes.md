@@ -13,6 +13,12 @@
 | `MissionProcessingFlowStrategyResolverTest` | Unitário: **CRÍTICA** vs demais prioridades. |
 | `AfterCommitMissionDispatchTest` | Unitário: sem transação ativa, publica e notifica imediatamente. |
 
+## Observação pós-migração hexagonal (Fase 2)
+
+- Controllers REST passaram a depender de **portas de entrada** (`application/port/in/*`) em vez de services concretos.
+- O fluxo `missions.created` continua com consumer fino + ingestão, mas a ingestão agora delega para a **porta de entrada** `ProcessMissionAfterCreationUseCase` (implementada por `MissionWorkflowService`).
+- A publicação pós-commit foi formalizada via porta de saída `MissionPostCommitDispatchPort` (implementada por `AfterCommitMissionDispatch`).
+
 ## Tipos de teste
 
 - **Integração:** API + JPA + transações reais em H2.
