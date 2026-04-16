@@ -11,6 +11,8 @@ const apiProxy = {
 
 export default defineConfig({
   plugins: [react()],
+  // Usa a pasta compartilhada ../assets como diretório público do frontend.
+  publicDir: "../assets",
   server: {
     port: 5173,
     proxy: { ...apiProxy }

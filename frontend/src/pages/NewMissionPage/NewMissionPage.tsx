@@ -1,9 +1,16 @@
-import { useState, type FormEvent } from "react";
+import { lazy, Suspense, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
 import { api } from "../../services/api";
 import type { CreateMissionPayload, PrioridadeMissao, TipoAmeaca } from "../../types/mission";
 import styles from "./NewMissionPage.module.css";
+import { HERO_GLTF_VIEW_PRESET } from "../../components/GltfHeroViewer/heroViewPreset";
+
+const GltfHeroViewer = lazy(() =>
+  import("../../components/GltfHeroViewer/GltfHeroViewer").then((m) => ({ default: m.GltfHeroViewer }))
+);
+
+const GREEN_LANTERN_MODEL = "/green_lanterntexturedrigged.glb";
 
 const TIPOS: TipoAmeaca[] = [
   "INVASAO",
@@ -70,8 +77,10 @@ export function NewMissionPage() {
           </Link>
         }
       />
-      <div className={styles.card}>
-        <form className={styles.form} onSubmit={(e) => void onSubmit(e)}>
+      <div className={styles.shell}>
+        <div className={styles.formColumn}>
+          <div className={styles.card}>
+            <form className={styles.form} onSubmit={(e) => void onSubmit(e)}>
           <label className={styles.field}>
             <span>Título</span>
             <input
@@ -139,7 +148,14 @@ export function NewMissionPage() {
           <button type="submit" className={styles.btn} disabled={busy}>
             {busy ? "Enviando…" : "Registrar e abrir detalhe"}
           </button>
-        </form>
+            </form>
+          </div>
+        </div>
+        <aside className={styles.heroColumn} aria-label="Lanterna Verde — referência tática">
+          <Suspense fallback={<div className={styles.heroFallback}>Carregando modelo 3D…</div>}>
+            <GltfHeroViewer modelUrl={GREEN_LANTERN_MODEL} {...HERO_GLTF_VIEW_PRESET} />
+          </Suspense>
+        </aside>
       </div>
     </div>
   );

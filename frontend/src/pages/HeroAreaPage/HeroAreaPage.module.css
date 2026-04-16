@@ -23,10 +23,17 @@
   align-items: center;
   gap: 20px;
   padding: 16px 20px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(155, 125, 255, 0.28);
-  background: rgba(155, 125, 255, 0.06);
+  clip-path: var(--hud-clip-14);
+  border: none;
+  background:
+    var(--hud-texture-hex),
+    linear-gradient(95deg, rgba(155, 125, 255, 0.1) 0%, rgba(18, 22, 32, 0.92) 100%);
+  background-size: var(--hud-texture-hex-size), auto;
   margin-bottom: 8px;
+  box-shadow:
+    0 0 0 1px rgba(155, 125, 255, 0.32),
+    0 0 24px rgba(155, 125, 255, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .stripLabel {
@@ -83,35 +90,56 @@
 
 .btnPrimary {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 11px 18px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(155, 125, 255, 0.45);
-  background: rgba(155, 125, 255, 0.12);
+  clip-path: var(--hud-clip-10);
+  border: none;
+  background: linear-gradient(165deg, rgba(155, 125, 255, 0.28) 0%, rgba(40, 28, 72, 0.85) 100%);
   color: var(--text);
-  font-weight: 650;
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   text-decoration: none;
+  box-shadow:
+    0 0 0 1px rgba(155, 125, 255, 0.45),
+    0 0 18px rgba(155, 125, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-shadow: 0 0 10px rgba(155, 125, 255, 0.35);
+  transition: box-shadow 0.18s ease, transform 0.15s ease;
 }
 
 .btnPrimary:hover {
-  background: rgba(155, 125, 255, 0.2);
+  box-shadow:
+    0 0 0 1px rgba(155, 125, 255, 0.6),
+    0 0 26px rgba(155, 125, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 .btnGhost {
   margin-left: auto;
-  padding: 9px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  padding: 9px 16px;
+  clip-path: var(--hud-clip-10);
+  border: none;
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  background: rgba(12, 18, 34, 0.5);
+  background: linear-gradient(180deg, rgba(28, 34, 44, 0.85) 0%, rgba(13, 17, 23, 0.92) 100%);
+  box-shadow:
+    0 0 0 1px rgba(155, 125, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: box-shadow 0.18s ease;
 }
 
 .btnGhost:hover {
   color: var(--text);
-  border-color: rgba(155, 125, 255, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(155, 125, 255, 0.38),
+    0 0 16px rgba(155, 125, 255, 0.12);
 }
 
 .link {

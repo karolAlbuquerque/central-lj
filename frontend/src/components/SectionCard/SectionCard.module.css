@@ -1,46 +1,83 @@
 .card {
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: rgba(14, 20, 36, 0.55);
   margin-bottom: 20px;
   overflow: hidden;
+  clip-path: polygon(
+    var(--hud-chamfer-sm) 0%,
+    calc(100% - var(--hud-chamfer-sm)) 0%,
+    100% var(--hud-chamfer-sm),
+    100% calc(100% - var(--hud-chamfer-sm)),
+    calc(100% - var(--hud-chamfer-sm)) 100%,
+    var(--hud-chamfer-sm) 100%,
+    0% calc(100% - var(--hud-chamfer-sm)),
+    0% var(--hud-chamfer-sm)
+  );
+  background:
+    var(--hud-texture-carbon),
+    linear-gradient(180deg, rgba(22, 27, 34, 0.55) 0%, rgba(13, 17, 23, 0.75) 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 255, 0.2),
+    0 12px 36px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .default {
-  border-color: rgba(94, 176, 255, 0.2);
+  border: none;
 }
 
 .alert {
-  border-color: rgba(255, 77, 109, 0.35);
-  background: linear-gradient(180deg, rgba(255, 77, 109, 0.07), rgba(14, 20, 36, 0.55));
+  background:
+    linear-gradient(180deg, rgba(255, 77, 77, 0.08) 0%, transparent 45%),
+    var(--hud-texture-carbon),
+    linear-gradient(180deg, rgba(22, 27, 34, 0.55) 0%, rgba(13, 17, 23, 0.75) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 77, 77, 0.4),
+    0 0 28px rgba(255, 77, 77, 0.12),
+    0 12px 36px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  animation: hud-glitch-soft 6s ease-in-out infinite;
 }
 
 .gold {
-  border-color: var(--accent-gold-dim);
-  background: linear-gradient(180deg, rgba(212, 168, 83, 0.06), rgba(14, 20, 36, 0.55));
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 255, 0.28),
+    0 12px 36px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .head {
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(7, 11, 20, 0.35);
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid rgba(0, 209, 255, 0.12);
+  background:
+    var(--hud-texture-hex),
+    linear-gradient(180deg, rgba(30, 38, 48, 0.95) 0%, rgba(18, 22, 30, 0.9) 100%);
+  background-size: var(--hud-texture-hex-size), auto;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
 .title {
   margin: 0 0 6px;
   font-family: var(--font-display);
   font-size: 17px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.12);
 }
 
 .hint {
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
-  color: var(--muted);
+  color: var(--hud-muted);
+  font-weight: 400;
 }
 
 .body {
   padding: 18px 20px 20px;
+  background:
+    var(--hud-texture-hex),
+    rgba(13, 17, 23, 0.35);
+  background-size: var(--hud-texture-hex-size), auto;
 }

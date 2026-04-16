@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { N1DevTools } from "../../components/N1DevTools/N1DevTools";
+
+const BatmanViewer = lazy(() =>
+  import("../../components/BatmanViewer/BatmanViewer").then((m) => ({ default: m.BatmanViewer }))
+);
 import { PageHeader } from "../../components/PageHeader/PageHeader";
 import { PriorityBadge } from "../../components/PriorityBadge/PriorityBadge";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
@@ -128,6 +132,13 @@ export function DashboardPage() {
 
       {error && <p className={styles.errorBanner}>{error}</p>}
 
+      <div className={styles.dashboardShell}>
+        <aside className={styles.batmanColumn} aria-label="Visualização tática">
+          <Suspense fallback={<div className={styles.batmanFallback}>Carregando visualização 3D…</div>}>
+            <BatmanViewer />
+          </Suspense>
+        </aside>
+        <div className={styles.mainColumn}>
       {summary && emAnaliseCount !== null ? (
         <>
           <div className={styles.metrics}>
@@ -288,6 +299,8 @@ export function DashboardPage() {
       ) : !error ? (
         <p className={styles.muted}>Carregando painel…</p>
       ) : null}
+        </div>
+      </div>
 
       <N1DevTools />
     </div>

@@ -1,95 +1,130 @@
 .card {
   position: relative;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   padding: 18px 20px;
-  min-height: 104px;
-  background: linear-gradient(145deg, rgba(24, 34, 54, 0.75), rgba(12, 18, 34, 0.65));
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-card);
+  min-height: 112px;
   overflow: hidden;
+  clip-path: polygon(
+    var(--hud-chamfer-sm) 0%,
+    calc(100% - var(--hud-chamfer-sm)) 0%,
+    100% var(--hud-chamfer-sm),
+    100% calc(100% - var(--hud-chamfer-sm)),
+    calc(100% - var(--hud-chamfer-sm)) 100%,
+    var(--hud-chamfer-sm) 100%,
+    0% calc(100% - var(--hud-chamfer-sm)),
+    0% var(--hud-chamfer-sm)
+  );
+  background:
+    var(--hud-texture-hex),
+    linear-gradient(160deg, rgba(30, 36, 46, 0.98) 0%, rgba(18, 22, 28, 0.96) 100%);
+  background-size: var(--hud-texture-hex-size), auto;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .card::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--accent-info);
-  opacity: 0.65;
+  top: 0;
+  left: var(--hud-chamfer-sm);
+  right: var(--hud-chamfer-sm);
+  height: 4px;
+  clip-path: polygon(3px 0, calc(100% - 3px) 0, 100% 100%, 0 100%);
+  background: var(--hud-cyan);
+  opacity: 0.9;
+  box-shadow: 0 2px 14px rgba(0, 209, 255, 0.45);
 }
 
-.default::before {
-  background: var(--accent-info);
+/* Ciano: total, em análise, em andamento */
+.default::before,
+.info::before,
+.gold::before,
+.warn::before {
+  background: var(--hud-cyan);
+  box-shadow: 0 0 16px rgba(0, 209, 255, 0.55);
 }
 
-.info::before {
-  background: var(--accent-cyan);
-}
-
-.gold::before {
-  background: var(--accent-gold);
+.default,
+.info,
+.gold,
+.warn {
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 255, 0.32),
+    0 0 24px rgba(0, 209, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .success::before {
   background: var(--accent-success);
+  box-shadow: 0 0 14px rgba(46, 229, 157, 0.45);
 }
 
-.warn::before {
-  background: var(--accent-warn);
+.success {
+  box-shadow:
+    0 0 0 1px rgba(46, 229, 157, 0.35),
+    0 0 22px rgba(46, 229, 157, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .danger::before {
-  background: var(--accent-danger);
+  background: var(--hud-red);
+  box-shadow: 0 0 16px rgba(255, 77, 77, 0.55);
+}
+
+.danger {
+  box-shadow:
+    0 0 0 1px rgba(255, 77, 77, 0.45),
+    var(--hud-glow-red),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.35);
+  animation: hud-glitch-soft 5s ease-in-out infinite;
 }
 
 .label {
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--muted-dim);
+  color: var(--hud-muted);
   margin-bottom: 10px;
-  padding-left: 8px;
+  padding-top: 2px;
+  font-weight: 600;
 }
 
 .value {
   font-size: 32px;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-style: italic;
   font-family: var(--font-display);
-  padding-left: 8px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
   line-height: 1.1;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.default .value,
+.info .value,
+.gold .value,
+.warn .value {
+  text-shadow: 0 0 20px rgba(0, 209, 255, 0.45), 0 0 36px rgba(0, 209, 255, 0.2);
+}
+
+.success .value {
+  text-shadow: 0 0 18px rgba(46, 229, 157, 0.4);
+}
+
+.danger .value {
+  text-shadow: 0 0 20px rgba(255, 77, 77, 0.55), 0 0 32px rgba(255, 77, 77, 0.2);
 }
 
 .hint {
   margin-top: 10px;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--hud-muted);
   line-height: 1.4;
-  padding-left: 8px;
-}
-
-.success {
-  border-color: rgba(62, 224, 168, 0.3);
-}
-
-.warn {
-  border-color: rgba(240, 180, 41, 0.35);
-}
-
-.danger {
-  border-color: rgba(255, 77, 109, 0.4);
-}
-
-.info {
-  border-color: rgba(61, 217, 232, 0.3);
-}
-
-.gold {
-  border-color: var(--accent-gold-dim);
+  font-weight: 400;
 }

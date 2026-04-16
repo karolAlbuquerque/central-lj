@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
+import { ModelViewer } from "../../components/ModelViewer/ModelViewer";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
 import { PriorityBadge } from "../../components/PriorityBadge/PriorityBadge";
 import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
@@ -20,6 +21,8 @@ const STATUS_FILTERS: { id: FilterMode; label: string }[] = [
   { id: "CONCLUIDA", label: "Concluídas" },
   { id: "FALHA_PROCESSAMENTO", label: "Falhas" }
 ];
+
+const BATARANG_MODEL = "/batman_batarang_-_ben_affleck.glb";
 
 export function MissionsListPage() {
   const [rows, setRows] = useState<Mission[]>([]);
@@ -122,6 +125,10 @@ export function MissionsListPage() {
           </table>
         </div>
       ) : null}
+
+      <div className={styles.batarangZone} aria-label="Batarang tática">
+        <ModelViewer src={BATARANG_MODEL} alt="Batarang do Batman" />
+      </div>
     </div>
   );
 }

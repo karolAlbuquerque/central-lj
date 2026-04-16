@@ -17,10 +17,17 @@
 
 .head {
   padding: 24px 26px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(62, 224, 168, 0.3);
-  background: linear-gradient(145deg, rgba(62, 224, 168, 0.08), rgba(14, 20, 36, 0.9));
-  box-shadow: var(--shadow-card);
+  clip-path: var(--hud-clip-16);
+  border: none;
+  background:
+    var(--hud-texture-hex),
+    linear-gradient(145deg, rgba(46, 229, 157, 0.12), rgba(18, 24, 36, 0.94));
+  background-size: var(--hud-texture-hex-size), auto;
+  box-shadow:
+    0 0 0 1px rgba(46, 229, 157, 0.35),
+    0 0 28px rgba(46, 229, 157, 0.1),
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .kicker {
@@ -75,9 +82,15 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: rgba(7, 11, 20, 0.35);
+  clip-path: var(--hud-clip-10);
+  border: none;
+  background:
+    var(--hud-texture-hex),
+    rgba(13, 17, 23, 0.55);
+  background-size: var(--hud-texture-hex-size), auto;
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 255, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .link {
@@ -91,10 +104,17 @@
 }
 
 .panel {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  clip-path: var(--hud-clip-14);
+  border: none;
   padding: 22px;
-  background: rgba(14, 20, 36, 0.55);
+  background:
+    var(--hud-texture-hex),
+    rgba(14, 20, 36, 0.65);
+  background-size: var(--hud-texture-hex-size), auto;
+  box-shadow:
+    0 0 0 1px rgba(0, 209, 255, 0.18),
+    0 12px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .muted {

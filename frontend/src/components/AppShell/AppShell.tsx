@@ -100,9 +100,7 @@ export function AppShell({ mode, navItems, children }: Props) {
               {mode === "admin" ? "Central de operações" : "Área do herói"}
             </div>
             <h1 className={styles.topbarTitle}>{head.title}</h1>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", maxWidth: "62ch", lineHeight: 1.45 }}>
-              {head.sub}
-            </p>
+            <p className={styles.topbarSub}>{head.sub}</p>
           </div>
           <div className={styles.topbarRight}>
             <span className={styles.phaseChip}>N2 · painel</span>

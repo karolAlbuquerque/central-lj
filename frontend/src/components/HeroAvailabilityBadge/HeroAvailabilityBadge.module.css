@@ -1,27 +1,40 @@
 .badge {
   display: inline-flex;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 650;
+  align-items: center;
+  padding: 5px 11px;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  clip-path: var(--hud-clip-6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .disp {
-  border: 1px solid rgba(46, 229, 157, 0.45);
+  border: none;
   color: #b8ffe8;
-  background: rgba(46, 229, 157, 0.1);
+  background: linear-gradient(180deg, rgba(46, 229, 157, 0.28) 0%, rgba(8, 32, 28, 0.92) 100%);
+  box-shadow:
+    0 0 0 1px rgba(46, 229, 157, 0.5),
+    0 0 14px rgba(46, 229, 157, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .missao {
-  border: 1px solid rgba(255, 200, 87, 0.45);
+  border: none;
   color: #ffe3a8;
-  background: rgba(255, 200, 87, 0.12);
+  background: linear-gradient(180deg, rgba(255, 200, 87, 0.22) 0%, rgba(48, 36, 12, 0.9) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 200, 87, 0.42),
+    0 0 12px rgba(255, 200, 87, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .inat {
-  border: 1px solid rgba(170, 179, 197, 0.45);
+  border: none;
   color: var(--muted);
-  background: rgba(18, 26, 51, 0.4);
+  background: rgba(18, 22, 30, 0.88);
+  box-shadow: 0 0 0 1px rgba(0, 209, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
