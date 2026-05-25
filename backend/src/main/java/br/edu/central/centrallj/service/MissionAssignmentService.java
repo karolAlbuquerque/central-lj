@@ -1,5 +1,10 @@
 package br.edu.central.centrallj.service;
 
+import br.edu.central.centrallj.application.port.in.AssignMissionUseCase;
+import br.edu.central.centrallj.application.port.out.EquipePersistencePort;
+import br.edu.central.centrallj.application.port.out.HeroiPersistencePort;
+import br.edu.central.centrallj.application.port.out.MissionNotificationPort;
+import br.edu.central.centrallj.application.port.out.MissionPersistencePort;
 import br.edu.central.centrallj.domain.EquipeHeroica;
 import br.edu.central.centrallj.domain.Heroi;
 import br.edu.central.centrallj.domain.HeroiDisponibilidade;
@@ -11,48 +16,47 @@ import br.edu.central.centrallj.dto.MissionMapper;
 import br.edu.central.centrallj.dto.MissionResponse;
 import br.edu.central.centrallj.exception.BadRequestException;
 import br.edu.central.centrallj.exception.ResourceNotFoundException;
-import br.edu.central.centrallj.repository.HeroiRepository;
-import br.edu.central.centrallj.repository.MissionRepository;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class MissionAssignmentService {
+public class MissionAssignmentService implements AssignMissionUseCase {
 
   private static final String ATRIB_PADRAO = "Coordenação";
 
-  private final MissionRepository missionRepository;
-  private final HeroiRepository heroiRepository;
-  private final EquipeHeroicaService equipeHeroicaService;
+  private final MissionPersistencePort missionPersistencePort;
+  private final HeroiPersistencePort heroiPersistencePort;
+  private final EquipePersistencePort equipePersistencePort;
   private final MissionHistoryRecorder missionHistoryRecorder;
-  private final MissionRealtimeNotifier missionRealtimeNotifier;
+  private final MissionNotificationPort missionNotificationPort;
   private final MissionMapper missionMapper;
 
   public MissionAssignmentService(
-      MissionRepository missionRepository,
-      HeroiRepository heroiRepository,
-      EquipeHeroicaService equipeHeroicaService,
+      MissionPersistencePort missionPersistencePort,
+      HeroiPersistencePort heroiPersistencePort,
+      EquipePersistencePort equipePersistencePort,
       MissionHistoryRecorder missionHistoryRecorder,
-      MissionRealtimeNotifier missionRealtimeNotifier,
+      MissionNotificationPort missionNotificationPort,
       MissionMapper missionMapper) {
-    this.missionRepository = missionRepository;
-    this.heroiRepository = heroiRepository;
-    this.equipeHeroicaService = equipeHeroicaService;
+    this.missionPersistencePort = missionPersistencePort;
+    this.heroiPersistencePort = heroiPersistencePort;
+    this.equipePersistencePort = equipePersistencePort;
     this.missionHistoryRecorder = missionHistoryRecorder;
-    this.missionRealtimeNotifier = missionRealtimeNotifier;
+    this.missionNotificationPort = missionNotificationPort;
     this.missionMapper = missionMapper;
   }
 
+  @Override
   @Transactional
   public MissionResponse assignHero(UUID missionId, AssignHeroRequest request) {
     Mission mission =
-        missionRepository
+        missionPersistencePort
             .findByIdWithAssignments(missionId)
             .orElseThrow(() -> new ResourceNotFoundException("Missão não encontrada: " + missionId));
     Heroi hero =
-        heroiRepository
+        heroiPersistencePort
             .findById(request.heroiId())
             .orElseThrow(
                 () -> new ResourceNotFoundException("Herói não encontrado: " + request.heroiId()));
@@ -72,8 +76,8 @@ public class MissionAssignmentService {
       hero.setStatusDisponibilidade(HeroiDisponibilidade.EM_MISSAO);
     }
 
-    missionRepository.save(mission);
-    heroiRepository.save(hero);
+    missionPersistencePort.save(mission);
+    heroiPersistencePort.save(hero);
 
     var st = mission.getStatus();
     missionHistoryRecorder.record(
@@ -83,17 +87,22 @@ public class MissionAssignmentService {
         "Herói \"" + hero.getNomeHeroico() + "\" designado à missão.",
         MissionHistoryOrigin.API_ATRIBUICAO);
 
-    missionRealtimeNotifier.notifyMissionUpdate(missionId);
+    missionNotificationPort.notifyMissionUpdate(missionId);
     return missionMapper.toResponse(recarregarMission(missionId));
   }
 
+  @Override
   @Transactional
   public MissionResponse assignTeam(UUID missionId, AssignTeamRequest request) {
     Mission mission =
-        missionRepository
+        missionPersistencePort
             .findByIdWithAssignments(missionId)
             .orElseThrow(() -> new ResourceNotFoundException("Missão não encontrada: " + missionId));
-    EquipeHeroica equipe = equipeHeroicaService.requireById(request.equipeId());
+    EquipeHeroica equipe =
+        equipePersistencePort
+            .findById(request.equipeId())
+            .orElseThrow(
+                () -> new ResourceNotFoundException("Equipe não encontrada: " + request.equipeId()));
     if (!equipe.isAtiva()) {
       throw new BadRequestException("Equipe inativa não pode ser designada.");
     }
@@ -105,7 +114,7 @@ public class MissionAssignmentService {
     mission.setAtribuidoEm(agora);
     mission.setAtribuidoPor(atribuidoPor(request.atribuidoPor()));
     mission.setUltimaAtualizacao(agora);
-    missionRepository.save(mission);
+    missionPersistencePort.save(mission);
 
     var st = mission.getStatus();
     missionHistoryRecorder.record(
@@ -115,12 +124,12 @@ public class MissionAssignmentService {
         "Equipe \"" + equipe.getNome() + "\" designada à missão.",
         MissionHistoryOrigin.API_ATRIBUICAO);
 
-    missionRealtimeNotifier.notifyMissionUpdate(missionId);
+    missionNotificationPort.notifyMissionUpdate(missionId);
     return missionMapper.toResponse(recarregarMission(missionId));
   }
 
   private Mission recarregarMission(UUID missionId) {
-    return missionRepository
+    return missionPersistencePort
         .findByIdWithAssignments(missionId)
         .orElseThrow(() -> new ResourceNotFoundException("Missão não encontrada: " + missionId));
   }
@@ -130,7 +139,7 @@ public class MissionAssignmentService {
     if (anterior != null
         && anterior.getStatusDisponibilidade() == HeroiDisponibilidade.EM_MISSAO) {
       anterior.setStatusDisponibilidade(HeroiDisponibilidade.DISPONIVEL);
-      heroiRepository.save(anterior);
+      heroiPersistencePort.save(anterior);
     }
   }
 

@@ -3,12 +3,12 @@ package br.edu.central.centrallj.messaging.support;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+import br.edu.central.centrallj.application.port.out.MissionEventPublishPort;
+import br.edu.central.centrallj.application.port.out.MissionNotificationPort;
 import br.edu.central.centrallj.domain.MissionStatus;
 import br.edu.central.centrallj.domain.PrioridadeMissao;
 import br.edu.central.centrallj.domain.TipoAmeaca;
 import br.edu.central.centrallj.messaging.event.MissionCreatedKafkaEvent;
-import br.edu.central.centrallj.messaging.producer.MissionCreatedEventProducer;
-import br.edu.central.centrallj.service.MissionRealtimeNotifier;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
@@ -22,8 +22,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @ExtendWith(MockitoExtension.class)
 class AfterCommitMissionDispatchTest {
 
-  @Mock private MissionCreatedEventProducer createdEventProducer;
-  @Mock private MissionRealtimeNotifier missionRealtimeNotifier;
+  @Mock private MissionEventPublishPort missionEventPublishPort;
+  @Mock private MissionNotificationPort missionNotificationPort;
   @InjectMocks private AfterCommitMissionDispatch dispatch;
 
   @Test
@@ -44,7 +44,7 @@ class AfterCommitMissionDispatchTest {
 
     dispatch.publishCreatedAndNotifyClients(event, missionId);
 
-    verify(createdEventProducer).publish(eq(event));
-    verify(missionRealtimeNotifier).notifyMissionUpdate(eq(missionId));
+    verify(missionEventPublishPort).publishMissionCreated(eq(event));
+    verify(missionNotificationPort).notifyMissionUpdate(eq(missionId));
   }
 }

@@ -1,9 +1,10 @@
 package br.edu.central.centrallj.service;
 
+import br.edu.central.centrallj.application.port.out.MissionNotificationPort;
+import br.edu.central.centrallj.application.port.out.MissionPersistencePort;
 import br.edu.central.centrallj.domain.Mission;
 import br.edu.central.centrallj.domain.MissionHistoryOrigin;
 import br.edu.central.centrallj.domain.MissionStatus;
-import br.edu.central.centrallj.repository.MissionRepository;
 import br.edu.central.centrallj.service.workflow.MissionProcessingFlowStrategy;
 import br.edu.central.centrallj.service.workflow.MissionProcessingFlowStrategyResolver;
 import java.time.Instant;
@@ -20,34 +21,34 @@ public class MissionWorkflowService {
 
   private static final Logger log = LoggerFactory.getLogger(MissionWorkflowService.class);
 
-  private final MissionRepository missionRepository;
+  private final MissionPersistencePort missionPersistencePort;
   private final MissionProcessingFlowStrategyResolver strategyResolver;
   private final TransactionTemplate transactionTemplate;
   private final MissionHistoryRecorder missionHistoryRecorder;
-  private final MissionRealtimeNotifier missionRealtimeNotifier;
+  private final MissionNotificationPort missionNotificationPort;
   private final int stepDelayMs;
 
   public MissionWorkflowService(
-      MissionRepository missionRepository,
+      MissionPersistencePort missionPersistencePort,
       MissionProcessingFlowStrategyResolver strategyResolver,
       PlatformTransactionManager transactionManager,
       MissionHistoryRecorder missionHistoryRecorder,
-      MissionRealtimeNotifier missionRealtimeNotifier,
+      MissionNotificationPort missionNotificationPort,
       @Value("${central-lj.kafka.workflow-step-delay-ms:200}") int stepDelayMs) {
-    this.missionRepository = missionRepository;
+    this.missionPersistencePort = missionPersistencePort;
     this.strategyResolver = strategyResolver;
     this.transactionTemplate = new TransactionTemplate(transactionManager);
     this.missionHistoryRecorder = missionHistoryRecorder;
-    this.missionRealtimeNotifier = missionRealtimeNotifier;
+    this.missionNotificationPort = missionNotificationPort;
     this.stepDelayMs = stepDelayMs;
   }
 
   /**
-   * Executado pelo consumer Kafka: evolui a missão a partir de {@link MissionStatus#RECEBIDA}. Idempotente
-   * se o status já tiver avançado (reentrega de mensagem).
+   * Executado pelo consumer Kafka: evolui a missão a partir de {@link MissionStatus#RECEBIDA}.
+   * Idempotente se o status já tiver avançado (reentrega de mensagem).
    */
   public void processAfterCreation(UUID missionId) {
-    Mission initial = missionRepository.findById(missionId).orElse(null);
+    Mission initial = missionPersistencePort.findById(missionId).orElse(null);
     if (initial == null) {
       log.warn("[Central-LJ][Workflow] Missão {} não encontrada.", missionId);
       return;
@@ -65,7 +66,7 @@ public class MissionWorkflowService {
         transactionTemplate.executeWithoutResult(
             status -> {
               Mission m =
-                  missionRepository
+                  missionPersistencePort
                       .findById(missionId)
                       .orElseThrow(
                           () -> new IllegalStateException("Missão ausente durante workflow: " + missionId));
@@ -76,7 +77,7 @@ public class MissionWorkflowService {
               MissionStatus prev = m.getStatus();
               m.setStatus(next);
               m.setUltimaAtualizacao(Instant.now());
-              missionRepository.save(m);
+              missionPersistencePort.save(m);
               missionHistoryRecorder.record(
                   m,
                   prev,
@@ -85,7 +86,7 @@ public class MissionWorkflowService {
                   MissionHistoryOrigin.KAFKA_WORKFLOW);
               log.info("[Central-LJ][Workflow] Missão {} → {}", missionId, next);
             });
-        missionRealtimeNotifier.notifyMissionUpdate(missionId);
+        missionNotificationPort.notifyMissionUpdate(missionId);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -105,7 +106,7 @@ public class MissionWorkflowService {
   public void markFailure(UUID missionId) {
     transactionTemplate.executeWithoutResult(
         status ->
-            missionRepository
+            missionPersistencePort
                 .findById(missionId)
                 .ifPresent(
                     m -> {
@@ -115,7 +116,7 @@ public class MissionWorkflowService {
                       MissionStatus prev = m.getStatus();
                       m.setStatus(MissionStatus.FALHA_PROCESSAMENTO);
                       m.setUltimaAtualizacao(Instant.now());
-                      missionRepository.save(m);
+                      missionPersistencePort.save(m);
                       missionHistoryRecorder.record(
                           m,
                           prev,
@@ -123,6 +124,6 @@ public class MissionWorkflowService {
                           "Falha ou interrupção no processamento assíncrono.",
                           MissionHistoryOrigin.KAFKA_WORKFLOW_ERRO);
                     }));
-    missionRealtimeNotifier.notifyMissionUpdate(missionId);
+    missionNotificationPort.notifyMissionUpdate(missionId);
   }
 }

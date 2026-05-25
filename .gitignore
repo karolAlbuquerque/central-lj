@@ -28,6 +28,8 @@ backend/*.classpath
 
 # IntelliJ / Eclipse / NetBeans artifacts
 **/out/
+!**/adapter/out/
+!**/port/out/
 **/.metadata/
 **/.recommenders/
 

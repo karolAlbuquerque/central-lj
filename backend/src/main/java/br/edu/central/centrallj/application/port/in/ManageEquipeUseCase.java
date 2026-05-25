@@ -1,0 +1,13 @@
+package br.edu.central.centrallj.application.port.in;
+
+import br.edu.central.centrallj.dto.CreateEquipeRequest;
+import br.edu.central.centrallj.dto.EquipeDetailResponse;
+import br.edu.central.centrallj.dto.EquipeResponse;
+import java.util.List;
+import java.util.UUID;
+
+public interface ManageEquipeUseCase {
+  EquipeResponse create(CreateEquipeRequest request);
+  List<EquipeResponse> listAll();
+  EquipeDetailResponse getDetail(UUID id);
+}

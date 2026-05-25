@@ -1,13 +1,13 @@
 package br.edu.central.centrallj.bootstrap;
 
+import br.edu.central.centrallj.application.port.out.EquipePersistencePort;
+import br.edu.central.centrallj.application.port.out.HeroiPersistencePort;
+import br.edu.central.centrallj.application.port.out.UsuarioPersistencePort;
 import br.edu.central.centrallj.domain.EquipeHeroica;
 import br.edu.central.centrallj.domain.Heroi;
 import br.edu.central.centrallj.domain.HeroiDisponibilidade;
 import br.edu.central.centrallj.domain.UserRole;
 import br.edu.central.centrallj.domain.Usuario;
-import br.edu.central.centrallj.repository.EquipeHeroicaRepository;
-import br.edu.central.centrallj.repository.HeroiRepository;
-import br.edu.central.centrallj.repository.UsuarioRepository;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.boot.ApplicationArguments;
@@ -39,26 +39,26 @@ public class DemoAuthDataLoader implements ApplicationRunner {
   public static final UUID DEMO_ADMIN_USER_ID = UUID.fromString("33333333-3333-3333-3333-333333333301");
   public static final UUID DEMO_HERO_USER_ID = UUID.fromString("33333333-3333-3333-3333-333333333302");
 
-  private final UsuarioRepository usuarioRepository;
-  private final EquipeHeroicaRepository equipeHeroicaRepository;
-  private final HeroiRepository heroiRepository;
+  private final UsuarioPersistencePort usuarioPersistencePort;
+  private final EquipePersistencePort equipePersistencePort;
+  private final HeroiPersistencePort heroiPersistencePort;
   private final PasswordEncoder passwordEncoder;
 
   public DemoAuthDataLoader(
-      UsuarioRepository usuarioRepository,
-      EquipeHeroicaRepository equipeHeroicaRepository,
-      HeroiRepository heroiRepository,
+      UsuarioPersistencePort usuarioPersistencePort,
+      EquipePersistencePort equipePersistencePort,
+      HeroiPersistencePort heroiPersistencePort,
       PasswordEncoder passwordEncoder) {
-    this.usuarioRepository = usuarioRepository;
-    this.equipeHeroicaRepository = equipeHeroicaRepository;
-    this.heroiRepository = heroiRepository;
+    this.usuarioPersistencePort = usuarioPersistencePort;
+    this.equipePersistencePort = equipePersistencePort;
+    this.heroiPersistencePort = heroiPersistencePort;
     this.passwordEncoder = passwordEncoder;
   }
 
   @Override
   @Transactional
   public void run(ApplicationArguments args) {
-    if (usuarioRepository.count() > 0) {
+    if (usuarioPersistencePort.existsByEmail("coordenacao@central-lj.demo")) {
       return;
     }
     Instant now = Instant.now();
@@ -70,7 +70,7 @@ public class DemoAuthDataLoader implements ApplicationRunner {
     eq.setAtiva(true);
     eq.setCreatedAt(now);
     eq.setUpdatedAt(now);
-    equipeHeroicaRepository.save(eq);
+    equipePersistencePort.save(eq);
 
     Heroi hero = new Heroi();
     hero.setId(DEMO_HEROI_ID);
@@ -83,7 +83,7 @@ public class DemoAuthDataLoader implements ApplicationRunner {
     hero.setEquipe(eq);
     hero.setCreatedAt(now);
     hero.setUpdatedAt(now);
-    heroiRepository.save(hero);
+    heroiPersistencePort.save(hero);
 
     Usuario admin = new Usuario();
     admin.setId(DEMO_ADMIN_USER_ID);
@@ -95,7 +95,7 @@ public class DemoAuthDataLoader implements ApplicationRunner {
     admin.setHeroi(null);
     admin.setCreatedAt(now);
     admin.setUpdatedAt(now);
-    usuarioRepository.save(admin);
+    usuarioPersistencePort.save(admin);
 
     Usuario heroUser = new Usuario();
     heroUser.setId(DEMO_HERO_USER_ID);
@@ -107,6 +107,6 @@ public class DemoAuthDataLoader implements ApplicationRunner {
     heroUser.setHeroi(hero);
     heroUser.setCreatedAt(now);
     heroUser.setUpdatedAt(now);
-    usuarioRepository.save(heroUser);
+    usuarioPersistencePort.save(heroUser);
   }
 }

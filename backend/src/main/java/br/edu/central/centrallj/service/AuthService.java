@@ -1,10 +1,10 @@
 package br.edu.central.centrallj.service;
 
+import br.edu.central.centrallj.application.port.out.UsuarioPersistencePort;
 import br.edu.central.centrallj.domain.Usuario;
 import br.edu.central.centrallj.dto.AuthUserResponse;
 import br.edu.central.centrallj.dto.LoginRequest;
 import br.edu.central.centrallj.dto.LoginResponse;
-import br.edu.central.centrallj.repository.UsuarioRepository;
 import br.edu.central.centrallj.security.JwtService;
 import br.edu.central.centrallj.security.UsuarioPrincipal;
 import java.util.UUID;
@@ -16,13 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
-  private final UsuarioRepository usuarioRepository;
+  private final UsuarioPersistencePort usuarioPersistencePort;
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
 
   public AuthService(
-      UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
-    this.usuarioRepository = usuarioRepository;
+      UsuarioPersistencePort usuarioPersistencePort,
+      PasswordEncoder passwordEncoder,
+      JwtService jwtService) {
+    this.usuarioPersistencePort = usuarioPersistencePort;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;
   }
@@ -31,7 +33,7 @@ public class AuthService {
   public LoginResponse login(LoginRequest request) {
     String email = request.email().trim().toLowerCase();
     Usuario usuario =
-        usuarioRepository
+        usuarioPersistencePort
             .findByEmailAndAtivoTrue(email)
             .orElseThrow(() -> new BadCredentialsException("E-mail ou senha inválidos."));
     if (!passwordEncoder.matches(request.password(), usuario.getSenhaHash())) {

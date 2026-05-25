@@ -1,24 +1,21 @@
 package br.edu.central.centrallj.service;
 
+import br.edu.central.centrallj.application.port.out.MissionHistoryPersistencePort;
 import br.edu.central.centrallj.domain.Mission;
 import br.edu.central.centrallj.domain.MissionHistory;
 import br.edu.central.centrallj.domain.MissionHistoryOrigin;
 import br.edu.central.centrallj.domain.MissionStatus;
-import br.edu.central.centrallj.repository.MissionHistoryRepository;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
-/**
- * Persistência do histórico de transições de status (rastreabilidade do fluxo assíncrono e da API).
- */
 @Service
 public class MissionHistoryRecorder {
 
-  private final MissionHistoryRepository missionHistoryRepository;
+  private final MissionHistoryPersistencePort missionHistoryPersistencePort;
 
-  public MissionHistoryRecorder(MissionHistoryRepository missionHistoryRepository) {
-    this.missionHistoryRepository = missionHistoryRepository;
+  public MissionHistoryRecorder(MissionHistoryPersistencePort missionHistoryPersistencePort) {
+    this.missionHistoryPersistencePort = missionHistoryPersistencePort;
   }
 
   public void record(
@@ -35,6 +32,6 @@ public class MissionHistoryRecorder {
     row.setMensagem(mensagem);
     row.setOrigem(origem);
     row.setOcorridoEm(Instant.now());
-    missionHistoryRepository.save(row);
+    missionHistoryPersistencePort.save(row);
   }
 }
