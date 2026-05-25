@@ -17,7 +17,51 @@ O problema que ele resolve não é “cadastrar registros”, e sim **gerenciar 
 
 ---
 
-## Arquitetura em camadas
+## Arquitetura hexagonal (backend)
+
+O backend segue **ports & adapters**:
+
+```mermaid
+flowchart TB
+  subgraph adapter_in["adapter/in — entrada"]
+    WEB[web/controller + dto]
+    KIN[messaging/consumer]
+  end
+  subgraph application["application — núcleo"]
+    UC[port/in — use cases]
+    SVC[service — implementações]
+    PO[port/out — persistência, eventos, SSE]
+    DOM[domain — POJOs puros]
+  end
+  subgraph adapter_out["adapter/out — saída"]
+    JPA[persistence/entity + adapters]
+    KOUT[messaging/kafka]
+    SSE[realtime/sse]
+  end
+  WEB --> UC
+  KIN --> UC
+  UC --> SVC
+  SVC --> PO
+  SVC --> DOM
+  PO --> JPA
+  PO --> KOUT
+  PO --> SSE
+```
+
+| Pacote | Responsabilidade |
+|--------|------------------|
+| `domain/` | Entidades de domínio **sem JPA** |
+| `application/port/in/` | Contratos dos casos de uso |
+| `application/port/out/` | Contratos de persistência, Kafka, notificações |
+| `application/service/` | Regras de negócio e orquestração |
+| `application/model/` | Commands e views (sem JSON da API) |
+| `adapter/in/web/` | REST, DTOs, JWT, mapeamento DTO ↔ application |
+| `adapter/in/messaging/` | Consumers Kafka |
+| `adapter/out/persistence/` | Entidades JPA, repositórios, adapters |
+| `adapter/out/messaging/` | Produtores Kafka |
+| `adapter/out/realtime/` | SSE |
+
+## Arquitetura em camadas (sistema completo)
 
 ```mermaid
 flowchart LR
@@ -25,7 +69,7 @@ flowchart LR
     A[React SPA<br/>localhost:5173]
   end
   subgraph API
-    B[Spring Boot<br/>localhost:8080]
+    B[Spring Boot hexagonal<br/>localhost:8080]
   end
   subgraph Dados
     C[(PostgreSQL)]
@@ -41,7 +85,7 @@ flowchart LR
 | Componente | Função |
 |------------|--------|
 | **Frontend** | Duas interfaces: coordenação (admin) e campo (herói) |
-| **Backend** | API REST, autenticação JWT, regras de negócio, produtor/consumidor Kafka |
+| **Backend** | Hexagonal: use cases, domínio puro, adapters REST/Kafka/JPA/SSE |
 | **PostgreSQL** | Estado autoritativo: missões, heróis, equipes, histórico |
 | **Kafka** | Backbone de eventos — desacopla “aceitar a missão” de “processá-la” |
 | **SSE** | Push de atualizações para o dashboard sem WebSocket |

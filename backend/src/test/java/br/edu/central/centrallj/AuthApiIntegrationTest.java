@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import br.edu.central.centrallj.bootstrap.DemoAuthDataLoader;
-import br.edu.central.centrallj.messaging.producer.MissionCreatedEventProducer;
+import br.edu.central.centrallj.application.port.out.MissionEventPublishPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class AuthApiIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @MockitoBean private MissionCreatedEventProducer missionCreatedEventProducer;
+  @MockitoBean private MissionEventPublishPort missionEventPublishPort;
 
   @Test
   void loginCredenciaisInvalidas401() throws Exception {
@@ -112,7 +112,7 @@ class AuthApiIntegrationTest {
             .getResponse()
             .getContentAsString();
     String missionId = objectMapper.readTree(missionRes).get("id").asText();
-    verify(missionCreatedEventProducer).publish(any());
+    verify(missionEventPublishPort).publishMissionCreated(any());
 
     String assignBody =
         objectMapper.writeValueAsString(

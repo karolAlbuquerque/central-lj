@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import br.edu.central.centrallj.messaging.producer.MissionCreatedEventProducer;
+import br.edu.central.centrallj.application.port.out.MissionEventPublishPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +29,7 @@ class MissionApiIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @MockitoBean private MissionCreatedEventProducer missionCreatedEventProducer;
+  @MockitoBean private MissionEventPublishPort missionEventPublishPort;
 
   @Test
   void healthOk() throws Exception {
@@ -57,7 +57,7 @@ class MissionApiIntegrationTest {
             .getContentAsString();
 
     String id = objectMapper.readTree(res).get("id").asText();
-    verify(missionCreatedEventProducer, times(1)).publish(any());
+    verify(missionEventPublishPort, times(1)).publishMissionCreated(any());
 
     mockMvc
         .perform(get("/api/missions/" + id))
@@ -88,7 +88,7 @@ class MissionApiIntegrationTest {
     mockMvc
         .perform(post("/api/missions").contentType(MediaType.APPLICATION_JSON).content(body))
         .andExpect(status().isBadRequest());
-    verify(missionCreatedEventProducer, times(0)).publish(any());
+    verify(missionEventPublishPort, times(0)).publishMissionCreated(any());
   }
 
   @Test

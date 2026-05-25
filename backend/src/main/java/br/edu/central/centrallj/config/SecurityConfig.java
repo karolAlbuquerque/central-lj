@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import br.edu.central.centrallj.security.JwtAuthenticationFilter;
+import br.edu.central.centrallj.adapter.in.web.security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity

@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Pageable;
 
 public interface MissionPersistencePort {
   Mission save(Mission mission);
@@ -14,7 +13,7 @@ public interface MissionPersistencePort {
   Optional<Mission> findByIdWithAssignments(UUID id);
   List<Mission> findAllByOrderByDataCriacaoDesc();
   List<Mission> findByStatusOrderByDataCriacaoDesc(MissionStatus status);
-  List<Mission> findRecent(Pageable pageable);
+  List<Mission> findRecent(int limit);
   List<Mission> findByHeroiResponsavelIdOrderByDataCriacaoDesc(UUID heroiId);
   long count();
   boolean existsById(UUID id);

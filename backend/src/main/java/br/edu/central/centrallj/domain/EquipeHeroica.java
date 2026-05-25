@@ -1,36 +1,22 @@
 package br.edu.central.centrallj.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-@Entity
-@Table(name = "equipes_heroicas")
 public class EquipeHeroica {
 
-  @Id private UUID id;
+  private UUID id;
 
-  @Column(nullable = false, length = 200)
   private String nome;
 
-  @Column(name = "especialidade_principal", length = 200)
   private String especialidadePrincipal;
 
-  @Column(nullable = false)
   private boolean ativa = true;
 
-  @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
-  @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
-  @PrePersist
   void prePersist() {
     Instant now = Instant.now();
     if (createdAt == null) {
@@ -39,7 +25,6 @@ public class EquipeHeroica {
     updatedAt = now;
   }
 
-  @PreUpdate
   void preUpdate() {
     updatedAt = Instant.now();
   }

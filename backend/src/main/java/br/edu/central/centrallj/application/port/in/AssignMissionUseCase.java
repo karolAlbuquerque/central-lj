@@ -1,11 +1,12 @@
 package br.edu.central.centrallj.application.port.in;
 
-import br.edu.central.centrallj.dto.AssignHeroRequest;
-import br.edu.central.centrallj.dto.AssignTeamRequest;
-import br.edu.central.centrallj.dto.MissionResponse;
+import br.edu.central.centrallj.application.model.AssignHeroCommand;
+import br.edu.central.centrallj.application.model.AssignTeamCommand;
+import br.edu.central.centrallj.application.model.MissionView;
 import java.util.UUID;
 
 public interface AssignMissionUseCase {
-  MissionResponse assignHero(UUID missionId, AssignHeroRequest request);
-  MissionResponse assignTeam(UUID missionId, AssignTeamRequest request);
+  MissionView assignHero(UUID missionId, AssignHeroCommand command);
+
+  MissionView assignTeam(UUID missionId, AssignTeamCommand command);
 }

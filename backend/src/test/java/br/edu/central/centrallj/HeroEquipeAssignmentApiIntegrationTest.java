@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import br.edu.central.centrallj.messaging.producer.MissionCreatedEventProducer;
+import br.edu.central.centrallj.application.port.out.MissionEventPublishPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class HeroEquipeAssignmentApiIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
-  @MockitoBean private MissionCreatedEventProducer missionCreatedEventProducer;
+  @MockitoBean private MissionEventPublishPort missionEventPublishPort;
 
   @Test
   void criarEquipeValida201() throws Exception {
@@ -124,7 +124,7 @@ class HeroEquipeAssignmentApiIntegrationTest {
             .getResponse()
             .getContentAsString();
     String missionId = objectMapper.readTree(missionRes).get("id").asText();
-    verify(missionCreatedEventProducer, times(1)).publish(any());
+    verify(missionEventPublishPort, times(1)).publishMissionCreated(any());
 
     String assignBody =
         objectMapper.writeValueAsString(Map.of("heroiId", heroiId, "atribuidoPor", "Coordenação"));

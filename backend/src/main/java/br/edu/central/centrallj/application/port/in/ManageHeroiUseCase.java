@@ -1,17 +1,21 @@
 package br.edu.central.centrallj.application.port.in;
 
-import br.edu.central.centrallj.dto.CreateHeroRequest;
-import br.edu.central.centrallj.dto.HeroDetailResponse;
-import br.edu.central.centrallj.dto.HeroResponse;
-import br.edu.central.centrallj.dto.MissionResponse;
-import br.edu.central.centrallj.dto.PatchHeroAvailabilityRequest;
+import br.edu.central.centrallj.application.model.CreateHeroCommand;
+import br.edu.central.centrallj.application.model.HeroDetailView;
+import br.edu.central.centrallj.application.model.HeroView;
+import br.edu.central.centrallj.application.model.MissionView;
+import br.edu.central.centrallj.application.model.PatchHeroAvailabilityCommand;
 import java.util.List;
 import java.util.UUID;
 
 public interface ManageHeroiUseCase {
-  HeroResponse create(CreateHeroRequest request);
-  List<HeroResponse> listAll();
-  HeroDetailResponse getDetail(UUID id);
-  List<MissionResponse> listMissionsForHero(UUID heroiId);
-  HeroResponse patchAvailability(UUID id, PatchHeroAvailabilityRequest request);
+  HeroView create(CreateHeroCommand command);
+
+  List<HeroView> listAll();
+
+  HeroDetailView getDetail(UUID id);
+
+  List<MissionView> listMissionsForHero(UUID heroiId);
+
+  HeroView patchAvailability(UUID id, PatchHeroAvailabilityCommand command);
 }
