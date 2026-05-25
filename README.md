@@ -1,22 +1,23 @@
-# Central de Missões da Liga da Justiça (Central-LJ)
+# Central-LJ
 
-Monorepo da **Central de Missões da Liga da Justiça**: plataforma web para **registrar e acompanhar missões** (ciclo de vida, prioridade, **Kafka**, **PostgreSQL**, **histórico auditável**), com **React**, **Spring Boot**, **Apache Kafka** e **SSE** no painel.
+**Central de Missões da Liga da Justiça** — plataforma web para registrar, priorizar e acompanhar missões com **ciclo de vida assíncrono**, **histórico auditável** e **dois perfis de uso** (coordenação e herói em campo).
+
+Projeto acadêmico de arquitetura distribuída: não é um CRUD simples — missões são **processos com estado**, evoluídos via **Kafka** após a API persistir e confirmar a transação.
 
 ---
 
-## Status N2 — fechamento
+## O que o sistema faz
 
-- **Fluxo:** criação **REST** → persistência + histórico → **commit** → **`missions.created` (Kafka)** → **consumer** (ingestão + workflow **Strategy**) → atualizações **SSE** e timeline na UI.
-- **Elenco (MVP):** entidades **herói** e **equipe heroica**; missão com **atribuição opcional** a herói ou equipe; histórico com origem **`API_ATRIBUICAO`**; disponibilidade do herói pode ir a **EM_MISSAO** quando designado.
-- **Autenticação (MVP):** **JWT** stateless; papéis **ADMIN** e **HERO** (reserva **OPERATOR**); vínculo **Usuario → Heroi** para contas de herói; **`POST /api/auth/login`**, **`GET /api/auth/me`**, **`GET /api/me/missions`**; seed demo opcional (`central-lj.auth.demo-seed`); frontend com **`/login`**, shell **administração** vs **área do herói** ([docs em `09` e `10`](docs/n2/09-autenticacao-e-papeis.md)).
-- **Mensageria:** `MissionCreatedEventIngestionService`, `AfterCommitMissionDispatch`, consumers finos; tópico de domínio **`missions.created`** separado de **`missions.events`** (teste/observabilidade).
-- **API (trecho):** missões, elenco e atribuição como antes; rotas administrativas e de atribuição exigem papel **ADMIN** ou **OPERATOR**; detalhe de missão e histórico exigem JWT; herói só consulta missão **designada a ele**. Ver tabela abaixo e [09-autenticacao-e-papeis.md](docs/n2/09-autenticacao-e-papeis.md).
-- **Frontend:** após login, **ADMIN/OPERATOR** usam o **shell de coordenação** (sidebar + topbar de comando: Painel, Missões, Heróis, Equipes, Nova missão); **HERO** usa o **shell operacional** (Minha área, Minhas missões, Perfil heroico quando houver vínculo), com identidade visual distinta mas coerente. **Login** em tela dividida (branding + formulário). UI premium: tokens escuros azul-petróleo, alertas em vermelho, acentos ciano/dourado, componentes **`SectionCard`**, **`StatCard`**, **`Timeline`**, **`PriorityBadge`**, **`PageHeader`**, **`AppShell`** — ver [**11-redesign-ui-shell.md**](docs/n2/11-redesign-ui-shell.md) e [**05-ui-e-dashboard.md**](docs/n2/05-ui-e-dashboard.md). Tipografia: **Inter**, **Space Grotesk**, **IBM Plex Mono**.
-- **Testes:** integração API + workflow + atribuição/heróis/equipes + **AuthApiIntegrationTest**; unitários (ingestão, strategy resolver, dispatch); **JaCoCo** (`backend/target/site/jacoco/index.html` após `.\mvnw.cmd test` no Windows).
-- **Docs N2:** [fluxo](docs/n2/01-fluxo-funcional.md), [decisões](docs/n2/02-decisoes-tecnicas.md), [pendências](docs/n2/03-pendencias.md), [testes](docs/n2/04-testes.md), [UI / dashboards](docs/n2/05-ui-e-dashboard.md), [**preparação banca**](docs/n2/06-preparacao-banca.md), [**módulo heróis/equipes**](docs/n2/07-modulo-herois-equipes.md), [**atribuição**](docs/n2/08-atribuicao-de-missoes.md), [**auth**](docs/n2/09-autenticacao-e-papeis.md), [**área do herói**](docs/n2/10-area-do-heroi.md), [**redesign UI / shell**](docs/n2/11-redesign-ui-shell.md).
-- **Entrega / banca:** [resumo final N2](docs/entrega/resumo-final-n2.md), [checklist](docs/entrega/checklist-banca-final.md), [roteiro demo](docs/entrega/roteiro-demo-final.md).
+| Papel | O que faz na prática |
+|-------|----------------------|
+| **Admin / Operador** | Dashboard, criar missões, atribuir herói ou equipe, gerenciar elenco |
+| **Herói** | Ver **somente** missões designadas a ele, acompanhar timeline e status |
+| **Kafka (invisível)** | Após criar missão, avança status automaticamente até `CONCLUIDA` |
+| **Histórico** | Registra cada transição (API, atribuição ou workflow) |
 
-**Ordem para subir tudo:** Postgres + Kafka (Compose) → backend → frontend.
+Fluxo resumido: **REST → PostgreSQL → commit → `missions.created` → consumer → Strategy → SSE na UI**.
+
+Documentação completa: [**docs/visao-do-sistema.md**](docs/visao-do-sistema.md)
 
 ---
 
@@ -24,145 +25,208 @@ Monorepo da **Central de Missões da Liga da Justiça**: plataforma web para **r
 
 | Camada | Tecnologia |
 |--------|------------|
-| Frontend | React 19 + Vite + TypeScript |
-| Backend | Spring Boot 3.4 + Java 17 |
+| Frontend | React 19 · Vite · TypeScript |
+| Backend | Spring Boot 3.4 · Java 17+ · **arquitetura hexagonal** |
+| Banco | PostgreSQL 16 · Flyway |
 | Mensageria | Apache Kafka |
-| Banco | PostgreSQL 16 (Compose) + Flyway |
-| Infra local | Docker Compose + scripts PowerShell |
+| Tempo real | SSE (`/api/missions/stream`) |
+| Auth | JWT stateless · papéis `ADMIN` · `HERO` · `OPERATOR` (reserva) |
+| Infra local | Docker Compose |
 
 ---
 
-## Estrutura do repositório
+## Arquitetura
 
+```text
+┌─────────────┐     REST + JWT      ┌──────────────────────────────┐
+│  React SPA  │ ◄──────────────────►│  Spring Boot (hexagonal)     │
+│  :5173      │     SSE stream      │  :8080                       │
+└─────────────┘                     └──────────┬───────────────────┘
+                                               │
+                         ┌─────────────────────┼─────────────────────┐
+                         ▼                     ▼                     ▼
+                   PostgreSQL              Kafka                 Flyway
+                   :5433                   :9092
 ```
-central-lj/
-├── README.md
-├── docs/
-│   ├── n1/ …
-│   ├── n2/              # Fluxo N2, decisões, banca
-│   ├── arquitetura/
-│   ├── figma/
-│   └── entrega/
-├── infra/
-├── backend/
-├── frontend/
-└── assets/
+
+**Backend (ports & adapters):**
+
+```text
+adapter/in/web          → REST, DTOs, JWT
+adapter/in/messaging    → consumers Kafka
+application/            → use cases, domain puro, regras
+adapter/out/persistence → JPA, repositórios
+adapter/out/messaging   → produtor Kafka
+adapter/out/realtime    → SSE
 ```
+
+Diagramas e papéis detalhados: [docs/visao-do-sistema.md](docs/visao-do-sistema.md) · [docs/arquitetura/](docs/arquitetura/)
 
 ---
 
-## Como rodar (N2)
+## Pré-requisitos
 
-### 1) Infra: PostgreSQL + Kafka + Kafka UI
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (PostgreSQL + Kafka)
+- **JDK 17+** (`java -version`)
+- **Node.js 18+** (`node -version`)
 
-Na raiz `central-lj/`:
+---
+
+## Como rodar
+
+Suba nesta ordem: **infra → backend → frontend**.
+
+### 1. Infraestrutura
+
+```bash
+cd infra
+docker compose up -d
+docker compose ps   # postgres, kafka e kafka-ui devem estar Up
+```
+
+| Serviço | Endereço |
+|---------|----------|
+| PostgreSQL | `localhost:5433` · DB `central_lj` · user/pass `central_lj` |
+| Kafka | `localhost:9092` |
+| Kafka UI | http://localhost:8088 |
+
+<details>
+<summary>Windows (PowerShell)</summary>
 
 ```powershell
 .\infra\scripts\up.ps1
 ```
 
-- **PostgreSQL (host):** `localhost:5433` → banco `central_lj`, usuário/senha `central_lj`.
-- **Kafka:** `localhost:9092`
-- **Kafka UI:** http://localhost:8088
+</details>
 
-Postgres inclui **healthcheck** (`pg_isready`) para ambientes que aguardam o banco ficar pronto.
+### 2. Backend
 
-Variáveis opcionais: `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`, `KAFKA_BOOTSTRAP_SERVERS`, `CENTRAL_LJ_KAFKA_TOPIC_CREATED`, `CENTRAL_LJ_WORKFLOW_STEP_DELAY_MS`.
-
-### 2) Backend
-
-**Pré-requisito:** **JDK 17+** instalado. No Windows, se aparecer erro de `JAVA_HOME`, configure a variável apontando para a pasta do JDK (ex.: `C:\Program Files\Eclipse Adoptium\jdk-17.x.x-hotspot`) ou instale o Temurin 17:
-
-```powershell
-winget install -e --id EclipseAdoptium.Temurin.17.JDK
+```bash
+cd backend
+./mvnw spring-boot:run
 ```
 
-**Maven:** este repositório inclui o **Maven Wrapper** — não é obrigatório ter `mvn` no PATH.
+Aguarde **`Started CentralLjApplication`** → http://localhost:8080
+
+<details>
+<summary>Windows</summary>
 
 ```powershell
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
-Se você já tem Maven instalado globalmente, pode usar `mvn spring-boot:run` em vez de `.\mvnw.cmd`.
+</details>
 
-→ http://localhost:8080 — [backend/README.md](backend/README.md).
+> **Porta 8080 ocupada?** Já há um backend rodando — use http://localhost:8080 ou encerre o processo: `lsof -ti :8080 | xargs kill`
 
-### 3) Frontend
+### 3. Frontend
 
-```powershell
+```bash
 cd frontend
-npm install
+npm install    # primeira vez
 npm run dev
 ```
 
-→ http://localhost:5173 — [frontend/README.md](frontend/README.md). A UI redireciona para **`/login`** se não houver token; após entrar, **coordenador** vai ao painel e **herói** à **área do herói**.
-
-**Contas de demonstração** (primeira subida com banco vazio e `central-lj.auth.demo-seed=true`): ver [docs/n2/09-autenticacao-e-papeis.md](docs/n2/09-autenticacao-e-papeis.md) — por exemplo `coordenacao@central-lj.demo` / `Admin@demo2026` e `heroi.demo@central-lj.demo` / `Hero@demo2026`.
-
-**Migração:** ao atualizar de uma versão anterior do repositório, aplique o Flyway até **`V4__auth_usuarios`** (tabela `usuarios`).
+→ http://localhost:5173 (redireciona para `/login` sem token)
 
 ---
 
-## Testes (backend)
+## Login demo
 
-```powershell
+Contas criadas automaticamente na primeira subida (`central-lj.auth.demo-seed=true`):
+
+| Papel | E-mail | Senha |
+|-------|--------|-------|
+| Admin / coordenação | `coordenacao@central-lj.demo` | `Admin@demo2026` |
+| Herói | `heroi.demo@central-lj.demo` | `Hero@demo2026` |
+
+Após login: **admin** → painel de coordenação · **herói** → `/heroi/area`
+
+---
+
+## Testes
+
+```bash
 cd backend
-.\mvnw.cmd test
+./mvnw test
 ```
 
-Relatório de cobertura: abrir `backend/target/site/jacoco/index.html` após os testes.
+Cobertura JaCoCo: `backend/target/site/jacoco/index.html`
 
 ---
 
-## Endpoints principais
+## Estrutura do repositório
+
+```text
+central-lj/
+├── backend/          # API Spring Boot (hexagonal)
+├── frontend/         # SPA React
+├── infra/            # Docker Compose (Postgres, Kafka, Kafka UI)
+├── docs/
+│   ├── visao-do-sistema.md   # visão geral (recomendado)
+│   ├── n2/                   # fluxo, auth, UI, banca
+│   ├── arquitetura/          # diagramas C4
+│   └── entrega/              # checklists e roteiro demo
+└── assets/
+```
+
+---
+
+## API principal
 
 | Método | Caminho | Descrição |
-|--------|---------|------------|
-| GET | `/api/health` | Saúde do serviço |
-| GET | `/api/hello` | Mensagem contextual |
-| **POST** | **`/api/auth/login`** | **Autenticação — retorna JWT + dados do usuário** |
-| **GET** | **`/api/auth/me`** | **Usuário atual (Bearer token)** |
-| POST | `/api/auth/logout` | Logout stateless (cliente descarta token) |
-| **GET** | **`/api/me/missions`** | **Missões do herói vinculado ao token (HERO)** |
-| **POST** | **`/api/missions`** | **Cria missão (RECEBIDA) + histórico + evento Kafka (após commit)** |
-| **GET** | **`/api/missions`** | **Lista missões** |
-| **PATCH** | **`/api/missions/{id}/assign-hero`** | **Designa herói responsável + histórico `API_ATRIBUICAO`** |
-| **PATCH** | **`/api/missions/{id}/assign-team`** | **Designa equipe responsável + histórico `API_ATRIBUICAO`** |
-| **GET** | **`/api/missions/dashboard/summary`** | **Métricas + recentes** |
-| **GET** | **`/api/missions/stream`** | **SSE — eventos `mission-update`** |
-| **GET** | **`/api/missions/recent`** | **Até 12 missões mais recentes** |
-| **GET** | **`/api/missions/status/{status}`** | **Filtra por status** |
-| **GET** | **`/api/missions/{id}/history`** | **Somente timeline** |
-| **GET** | **`/api/missions/{id}`** | **Detalhe + `historico` + `atribuicao`** |
-| POST | `/api/heroes` | Cadastro de herói |
-| GET | `/api/heroes` | Lista heróis |
-| GET | `/api/heroes/{id}` | Detalhe do herói |
-| GET | `/api/heroes/{id}/missions` | Missões em que o herói é responsável |
-| PATCH | `/api/heroes/{id}/availability` | Atualiza disponibilidade |
-| POST | `/api/teams` | Cadastro de equipe |
-| GET | `/api/teams` | Lista equipes |
-| GET | `/api/teams/{id}` | Detalhe + membros |
-| POST | `/api/missions/test` | Legado N1 |
-| POST | `/api/events/publish-test` | Legado N1 · `missions.events` |
+|--------|---------|-----------|
+| POST | `/api/auth/login` | Login → JWT |
+| GET | `/api/auth/me` | Usuário autenticado |
+| GET | `/api/me/missions` | Missões do herói logado |
+| POST | `/api/missions` | Cria missão + Kafka após commit |
+| GET | `/api/missions/dashboard/summary` | Métricas do painel |
+| GET | `/api/missions/stream` | SSE `mission-update` |
+| GET | `/api/missions/{id}` | Detalhe + timeline |
+| PATCH | `/api/missions/{id}/assign-hero` | Designa herói |
+| PATCH | `/api/missions/{id}/assign-team` | Designa equipe |
+| POST/GET | `/api/heroes` · `/api/teams` | Elenco heroico |
+
+Rotas administrativas exigem `ADMIN` ou `OPERATOR`. Herói só acessa missões **atribuídas a ele**.
+
+Detalhes de auth: [docs/n2/09-autenticacao-e-papeis.md](docs/n2/09-autenticacao-e-papeis.md)
 
 ---
 
-## Tópicos Kafka
+## Kafka
 
 | Tópico | Uso |
 |--------|-----|
-| **`missions.created`** | **`MISSION_CREATED`** após commit da nova missão; consumer executa workflow. |
-| `missions.events` | Publicação manual de teste; consumer apenas observa (log/debug). |
+| **`missions.created`** | Workflow automático após criar missão |
+| `missions.events` | Teste/observabilidade (legado N1) |
 
 ---
 
-## Coerência
+## Parar tudo
 
-Alterações em contratos HTTP ou em tópicos devem ser refletidas neste README, em `docs/n2/*` e, quando aplicável, nos diagramas.
+```bash
+# Infra
+cd infra && docker compose down
+
+# Backend e frontend: Ctrl+C nos terminais
+```
 
 ---
 
-## Próximo passo sugerido (pós-N2)
+## Documentação
 
-Ver [pendências](docs/n2/03-pendencias.md): autenticação, Testcontainers, Figma pixel-perfect, OpenAPI, reforço de idempotência em produção.
+| Documento | Conteúdo |
+|-----------|----------|
+| [visao-do-sistema.md](docs/visao-do-sistema.md) | Intuito, fluxos, papéis, arquitetura |
+| [01-fluxo-funcional.md](docs/n2/01-fluxo-funcional.md) | Sequência técnica detalhada |
+| [09-autenticacao-e-papeis.md](docs/n2/09-autenticacao-e-papeis.md) | JWT, roles, seed demo |
+| [roteiro-demo-final.md](docs/entrega/roteiro-demo-final.md) | Roteiro para apresentação |
+| [backend/README.md](backend/README.md) | Configuração e pacotes do backend |
+| [frontend/README.md](frontend/README.md) | Proxy Vite e build |
+
+---
+
+## Licença e contexto
+
+Projeto acadêmico — **Central-LJ** (N1 + N2). Tema Liga da Justiça como metáfora para centrais de comando orientadas a eventos.
