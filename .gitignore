@@ -72,3 +72,16 @@ coverage/
 docs/**/exports/*
 !docs/**/exports/.gitkeep
 
+# === Assistentes de IA / IDE agents (local, não versionar) ===
+.claude/
+.cursor/
+.aider*
+.copilot/
+.continue/
+.codeium/
+.windsurf/
+.codex/
+CLAUDE.md
+AGENTS.md
+.cursorrules
+

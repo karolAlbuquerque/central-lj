@@ -1,5 +1,7 @@
 # Documentação — Central-LJ
 
+**Visão geral do sistema (intuito, arquitetura, fluxos, papéis):** [visao-do-sistema.md](visao-do-sistema.md)
+
 | Pasta | Conteúdo |
 |--------|----------|
 | [n1/](n1/) | Visão, RNFs, plano de testes, padrões, roteiros, **transição para N2** |
