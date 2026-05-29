@@ -6,52 +6,40 @@ const BatmanViewer = lazy(() =>
   import("../../components/BatmanViewer/BatmanViewer").then((m) => ({ default: m.BatmanViewer }))
 );
 import { PageHeader } from "../../components/PageHeader/PageHeader";
-import { PriorityBadge } from "../../components/PriorityBadge/PriorityBadge";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
 import { StatCard } from "../../components/StatCard/StatCard";
-import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
-import { useMissionUpdates } from "../../hooks/useMissionUpdates";
 import { api } from "../../services/api";
-import type { DashboardSummary, Equipe, Hero, Mission, MissionStatus } from "../../types/mission";
+import type { Equipe, Hero } from "../../types/mission";
+import type { Mission, MissionCombatState } from "../../types/pvp";
 import styles from "./DashboardPage.module.css";
 
-function rowClass(m: Mission): string {
-  if (m.prioridade === "CRITICA") return styles.rowCritical;
-  if (m.prioridade === "ALTA") return styles.rowAlta;
-  return "";
-}
-
-type TableFilter = "RECENT" | MissionStatus;
-
-const FILTER_CHIPS: { id: TableFilter; label: string }[] = [
-  { id: "RECENT", label: "Recentes" },
-  { id: "RECEBIDA", label: "Recebidas" },
-  { id: "EM_ANALISE", label: "Em análise" },
-  { id: "CONCLUIDA", label: "Concluídas" },
-  { id: "FALHA_PROCESSAMENTO", label: "Falhas" }
-];
+const STATE_LABEL: Record<MissionCombatState, string> = {
+  LOBBY: "Lobby",
+  ACTIVE: "Ativa",
+  NORMAL: "Normal",
+  ALERTA_INFILTRACAO: "Alerta",
+  EM_DUELO: "Em duelo",
+  SABOTADA: "Sabotada",
+  DEFENDIDA: "Defendida",
+  SEM_CHEFE: "Sem chefe",
+  EM_CRISE: "Em crise",
+  COMPROMETIDA: "Comprometida"
+};
 
 export function DashboardPage() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [emAnaliseCount, setEmAnaliseCount] = useState<number | null>(null);
+  const [missions, setMissions] = useState<Mission[]>([]);
   const [heroes, setHeroes] = useState<Hero[]>([]);
   const [teams, setTeams] = useState<Equipe[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [tableFilter, setTableFilter] = useState<TableFilter>("RECENT");
-  const [tableRows, setTableRows] = useState<Mission[]>([]);
-  const [tableLoading, setTableLoading] = useState(false);
-  const [tableError, setTableError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [data, emAnaliseRows, heroesRows, teamsRows] = await Promise.all([
-        api.getDashboardSummary(),
-        api.listMissionsByStatus("EM_ANALISE"),
+      const [missionRows, heroesRows, teamsRows] = await Promise.all([
+        api.listMissions(),
         api.listHeroes(),
         api.listTeams()
       ]);
-      setSummary(data);
-      setEmAnaliseCount(emAnaliseRows.length);
+      setMissions(missionRows);
       setHeroes(heroesRows);
       setTeams(teamsRows);
       setError(null);
@@ -60,7 +48,9 @@ export function DashboardPage() {
     }
   }, []);
 
-  useMissionUpdates(load, 12000);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const heroStats = useMemo(() => {
     const ativos = heroes.filter((h) => h.ativo);
@@ -73,236 +63,99 @@ export function DashboardPage() {
 
   const teamsAtivas = useMemo(() => teams.filter((t) => t.ativa).length, [teams]);
 
-  const criticas = useMemo(() => {
-    if (!summary) return [];
-    return summary.recentes.filter((m) => m.prioridade === "CRITICA" || m.prioridade === "ALTA");
-  }, [summary]);
+  const emAlerta = useMemo(
+    () =>
+      missions.filter((m) =>
+        ["ALERTA_INFILTRACAO", "EM_DUELO", "SABOTADA", "EM_CRISE"].includes(m.combatState)
+      ).length,
+    [missions]
+  );
 
-  useEffect(() => {
-    let cancelled = false;
-    async function syncTable() {
-      if (tableFilter === "RECENT") {
-        if (summary) {
-          setTableRows(summary.recentes);
-        }
-        setTableLoading(false);
-        setTableError(null);
-        return;
-      }
-      setTableLoading(true);
-      setTableError(null);
-      try {
-        const rows = await api.listMissionsByStatus(tableFilter);
-        if (!cancelled) {
-          setTableRows(rows);
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setTableError(e instanceof Error ? e.message : "Falha ao filtrar.");
-        }
-      } finally {
-        if (!cancelled) {
-          setTableLoading(false);
-        }
-      }
-    }
-    void syncTable();
-    return () => {
-      cancelled = true;
-    };
-  }, [tableFilter, summary]);
+  const recentes = useMemo(
+    () =>
+      [...missions]
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 8),
+    [missions]
+  );
+
+  const stateKind = (s: MissionCombatState): "danger" | "warn" | null => {
+    if (["ALERTA_INFILTRACAO", "EM_DUELO", "EM_CRISE", "COMPROMETIDA"].includes(s)) return "danger";
+    if (["SABOTADA", "SEM_CHEFE"].includes(s)) return "warn";
+    return null;
+  };
 
   return (
     <div className={styles.page}>
       <PageHeader
         kicker="Painel operacional"
         title="Situação da central"
-        description={
-          <>
-            Visão agregada em tempo quase real: <strong>SSE</strong> quando o consumer Kafka altera status,
-            com polling de backup a cada 12s. Use os filtros para isolar status na demonstração.
-          </>
-        }
-        actions={
-          <Link className={styles.btnPrimary} to="/operacoes/nova">
-            + Nova missão
-          </Link>
-        }
+        description="Visão consolidada de missões, elenco heroico e equipes."
       />
 
-      {error && <p className={styles.errorBanner}>{error}</p>}
+      {error ? <p className={styles.errorBanner}>{error}</p> : null}
+
+      <div className={styles.metrics}>
+        <StatCard label="Missões" value={missions.length} variant="info" />
+        <StatCard label="Em alerta / duelo" value={emAlerta} variant="warn" />
+        <StatCard label="Heróis ativos" value={heroStats.totalAtivos} variant="success" />
+        <StatCard label="Equipes ativas" value={teamsAtivas} variant="info" />
+      </div>
 
       <div className={styles.dashboardShell}>
-        <aside className={styles.batmanColumn} aria-label="Visualização tática">
-          <Suspense fallback={<div className={styles.batmanFallback}>Carregando visualização 3D…</div>}>
-            <BatmanViewer />
-          </Suspense>
-        </aside>
         <div className={styles.mainColumn}>
-      {summary && emAnaliseCount !== null ? (
-        <>
-          <div className={styles.metrics}>
-            <StatCard label="Total de missões" value={summary.totalMissaoes} variant="info" />
-            <StatCard
-              label="Em análise"
-              value={emAnaliseCount}
-              hint="Aguardando triagem e priorização"
-              variant="gold"
-            />
-            <StatCard
-              label="Em andamento"
-              value={summary.emAndamento}
-              hint="Pipeline operacional ativo"
-              variant="warn"
-            />
-            <StatCard label="Concluídas" value={summary.concluidas} variant="success" />
-            <StatCard label="Falhas" value={summary.falhas} variant="danger" />
-          </div>
-
-          {(summary.falhas > 0 || criticas.length > 0) && (
-            <SectionCard
-              title="Alertas e prioridades"
-              variant="alert"
-              hint="Requer atenção imediata da coordenação."
-            >
-              <ul className={styles.alertList}>
-                {summary.falhas > 0 ? (
-                  <li>
-                    <span className={styles.alertDot} data-kind="danger" />
-                    <strong>{summary.falhas}</strong> missão(ões) com falha de processamento — investigar pipeline
-                    e reprocessar se necessário.
-                  </li>
-                ) : null}
-                {criticas.length > 0 ? (
-                  <li>
-                    <span className={styles.alertDot} data-kind="warn" />
-                    <strong>{criticas.length}</strong> ocorrência(s) recente(s) com prioridade alta ou crítica na
-                    janela exibida.
-                  </li>
-                ) : null}
-              </ul>
-            </SectionCard>
-          )}
-
-          <div className={styles.twoCol}>
-            <SectionCard
-              title="Missões críticas / prioritárias"
-              variant="gold"
-              hint="Recorte das missões recentes com prioridade ALTA ou CRÍTICA."
-            >
-              {criticas.length === 0 ? (
-                <p className={styles.muted}>Nenhuma missão prioritária na lista recente.</p>
-              ) : (
-                <ul className={styles.criticalList}>
-                  {criticas.map((m) => (
+          <SectionCard title="Missões recentes" hint="Últimas atualizações no sistema">
+            {recentes.length === 0 ? (
+              <p className={styles.muted}>Nenhuma missão registrada.</p>
+            ) : (
+              <ul className={styles.recentList}>
+                {recentes.map((m) => {
+                  const kind = stateKind(m.combatState);
+                  return (
                     <li key={m.id}>
+                      {kind ? <span className={styles.alertDot} data-kind={kind} aria-hidden /> : <span className={styles.alertDotNeutral} aria-hidden />}
                       <Link className={styles.missionLink} to={`/missoes/${m.id}`}>
                         {m.titulo}
                       </Link>
-                      <PriorityBadge prioridade={m.prioridade} />
-                      <StatusBadge status={m.status} />
+                      <span className={`${styles.missionMeta} ${kind === "danger" ? styles.metaDanger : kind === "warn" ? styles.metaWarn : ""}`}>
+                        {STATE_LABEL[m.combatState]}
+                      </span>
                     </li>
-                  ))}
-                </ul>
-              )}
-            </SectionCard>
-
-            <SectionCard
-              title="Recursos & unidades"
-              hint="Resumo do elenco ativo e das equipes em operação."
-            >
-              <div className={styles.resourceGrid}>
-                <div className={styles.resourceItem}>
-                  <span className={styles.resourceLabel}>Heróis disponíveis</span>
-                  <span className={styles.resourceValue}>{heroStats.disponiveis}</span>
-                  <span className={styles.resourceMeta}>de {heroStats.totalAtivos} ativos</span>
-                </div>
-                <div className={styles.resourceItem}>
-                  <span className={styles.resourceLabel}>Heróis em missão</span>
-                  <span className={styles.resourceValue}>{heroStats.emMissao}</span>
-                  <span className={styles.resourceMeta}>status EM_MISSAO</span>
-                </div>
-                <div className={styles.resourceItem}>
-                  <span className={styles.resourceLabel}>Equipes ativas</span>
-                  <span className={styles.resourceValue}>{teamsAtivas}</span>
-                  <span className={styles.resourceMeta}>de {teams.length} cadastradas</span>
-                </div>
-              </div>
-            </SectionCard>
-          </div>
-
-          <SectionCard
-            title="Lista operacional"
-            hint={
-              <>
-                Prioridade <strong>ALTA</strong> e <strong>CRÍTICA</strong> destacadas — clique no título para ver
-                histórico e linha do tempo.
-              </>
-            }
-          >
-            <div className={styles.filterBar}>
-              <span className={styles.filterLabel}>Filtro</span>
-              {FILTER_CHIPS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`${styles.chip} ${tableFilter === c.id ? styles.chipActive : ""}`}
-                  onClick={() => setTableFilter(c.id)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-            {tableLoading && <p className={styles.tableLoading}>Carregando lista…</p>}
-            {tableError && <p className={styles.errorInline}>{tableError}</p>}
-            {!tableLoading && tableRows.length === 0 && !tableError ? (
-              <p className={styles.muted}>Nenhuma missão neste filtro.</p>
-            ) : null}
-            {tableRows.length > 0 ? (
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Missão</th>
-                      <th>Prioridade</th>
-                      <th>Ameaça</th>
-                      <th>Status</th>
-                      <th>Atualizado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableRows.map((m) => (
-                      <tr key={m.id} className={rowClass(m)}>
-                        <td>
-                          <Link className={styles.missionLink} to={`/missoes/${m.id}`}>
-                            {m.titulo}
-                          </Link>
-                        </td>
-                        <td>
-                          <PriorityBadge prioridade={m.prioridade} />
-                        </td>
-                        <td className={styles.muted}>{m.tipoAmeaca.replaceAll("_", " ")}</td>
-                        <td>
-                          <StatusBadge status={m.status} />
-                        </td>
-                        <td className={styles.muted}>
-                          {new Date(m.ultimaAtualizacao).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
+                  );
+                })}
+              </ul>
+            )}
+            <Link className={styles.btnGhost} to="/missoes">
+              Ver todas as missões
+            </Link>
           </SectionCard>
-        </>
-      ) : !error ? (
-        <p className={styles.muted}>Carregando painel…</p>
-      ) : null}
-        </div>
-      </div>
 
-      <N1DevTools />
+          <SectionCard title="Elenco" hint="Disponibilidade atual">
+            <div className={styles.crewGrid}>
+              <div className={styles.crewItem}>
+                <span className={styles.crewValue}>{heroStats.disponiveis}</span>
+                <span className={styles.crewLabel}>Disponíveis</span>
+              </div>
+              <div className={styles.crewItem}>
+                <span className={`${styles.crewValue} ${styles.crewValueActive}`}>{heroStats.emMissao}</span>
+                <span className={styles.crewLabel}>Em missão</span>
+              </div>
+              <div className={styles.crewItem}>
+                <span className={styles.crewValue}>{heroStats.totalAtivos}</span>
+                <span className={styles.crewLabel}>Total ativos</span>
+              </div>
+            </div>
+          </SectionCard>
+
+          <N1DevTools />
+        </div>
+
+        <aside className={styles.batmanColumn}>
+          <Suspense fallback={null}>
+            <BatmanViewer />
+          </Suspense>
+        </aside>
+      </div>
     </div>
   );
 }

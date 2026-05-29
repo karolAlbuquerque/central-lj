@@ -3,29 +3,27 @@
 
 title Central-LJ — C4 Nível 1 (Contexto)
 
-Person(usuario, "Usuário comum", "Consulta ou interação prevista com a central (evolução pós-N1).")
-Person(operador, "Operador / Admin", "Registra missões, acompanha operações e indicadores.")
+Person(admin,    "ADMIN",    "Gerencia missões operacionais, heróis, equipes e dashboard de KPIs.")
+Person(operator, "OPERATOR", "Cria e atribui missões operacionais. Sem acesso a gestão de usuários.")
+Person(hero,     "HERO",     "Cria player missions (party), convida membros, executa puzzles, defende em duelos PvP.")
+Person(villain,  "VILLAIN",  "Infiltra missões heroicas, disputa duelos PvP e aplica efeitos de sabotagem.")
 
-System_Boundary(sistema, "Central de Missões da Liga da Justiça (Central-LJ)") {
-  System(web, "Frontend Web", "React (Vite). Interface desktop-first da central.")
-  System(api, "Backend API", "Spring Boot. REST, validação e integração com mensageria.")
-  SystemQueue(bus, "Apache Kafka", "Log de eventos do domínio (missões, mudanças de status).")
-  SystemDb(db, "PostgreSQL", "Persistência de missões, usuários e histórico (N2+).")
+System_Boundary(sistema, "Central-LJ — Central de Missões da Liga da Justiça") {
+  System(web, "Frontend Web", "React 19 + TypeScript + Vite 6.\n3 layouts por papel: Villain, Hero, Admin/Operator.\n17 páginas; puzzles interativos; visualizador 3D GLTF.\nSSE listener + polling fallback; CSS Modules.")
+  System(api, "Backend API", "Spring Boot 3.4 — Java 21.\nArquitetura Hexagonal; REST stateless; JWT; Flyway.\nProdutor + consumidor Kafka; SSE emitter.")
+  SystemQueue(kafka, "Apache Kafka (KRaft)", "missions.created — pipeline principal de workflow.\nmissions.events — eventos gerais/debug.\nGrupo de consumidores: central-lj-backend.")
+  SystemDb(db, "PostgreSQL 16", "11 tabelas, schema versionado por Flyway V1–V17:\nmissions, mission_history, heroes, equipes_heroicas,\nusuarios, player_missions, mission_members,\nmission_tasks, duel_sessions, puzzle_attempts,\nsabotage_events.")
 }
 
-Rel(usuario, web, "Usa", "HTTPS")
-Rel(operador, web, "Usa", "HTTPS")
+Rel(admin,    web, "Usa", "HTTPS")
+Rel(operator, web, "Usa", "HTTPS")
+Rel(hero,     web, "Usa", "HTTPS")
+Rel(villain,  web, "Usa", "HTTPS")
 
-Rel(web, api, "Consome API", "REST/JSON")
-Rel(api, bus, "Publica eventos", "tópicos Kafka")
-Rel(bus, api, "Entrega a consumidores", "grupo de consumidores N1/N2")
-
-Rel(api, db, "Acessa dados (futuro)", "JDBC")
-
-note right of bus
-  Na N1: publicação e consumo mínimo
-  provam o backbone assíncrono.
-end note
+Rel(web, api, "REST API + SSE stream", "JSON / text/event-stream")
+Rel(api, kafka, "Publica missions.created após commit JPA", "KafkaTemplate — AfterCommitMissionDispatch")
+Rel(kafka, api, "Consome missions.created e executa workflow", "MissionCreatedConsumer -> MissionWorkflowService")
+Rel(api, db, "Persiste 11 entidades de domínio via JPA", "JDBC / HikariCP")
 
 SHOW_LEGEND()
 @enduml

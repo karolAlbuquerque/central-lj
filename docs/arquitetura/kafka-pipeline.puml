@@ -1,0 +1,120 @@
+@startuml
+title Central-LJ — Pipeline Kafka: Criacao e Processamento de Missao
+
+skinparam activityArrowThickness 1.5
+skinparam activityBorderThickness 1.5
+skinparam activityFontSize 11
+skinparam noteFontSize 10
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam defaultTextAlignment center
+
+skinparam activity {
+  BackgroundColor        #FAFBFF
+  BorderColor            #3B5BDB
+  FontColor              #1A1A2E
+  DiamondBackgroundColor #FFF9DB
+  DiamondBorderColor     #F59F00
+  DiamondFontColor       #1A1A2E
+  StartColor             #2F9E44
+  EndColor               #C92A2A
+  BarColor               #3B5BDB
+}
+skinparam note {
+  BackgroundColor #F8F9FA
+  BorderColor     #ADB5BD
+  FontColor       #495057
+  FontSize        10
+}
+skinparam partition {
+  BorderColor  #ADB5BD
+  FontColor    #343A40
+  FontSize     11
+  FontStyle    bold
+}
+
+' ─── 1. CRIACAO ──────────────────────────────────────────────────────────────
+partition "1 — Criacao via API REST" {
+  start
+  :<b>POST /api/missions</b>\nMissionController -> MissionCommandService\n@Transactional ativo;
+
+  :#POSTGRES\nINSERT missions (status = RECEBIDA)\nINSERT mission_history (origem = API_REGISTRO);
+
+  note right
+    <b>Garantia transacional</b>
+    AfterCommitMissionDispatch registra
+    callback via Spring
+    TransactionSynchronizationManager.
+    O evento Kafka so e publicado
+    apos COMMIT bem-sucedido.
+    Rollback = sem publicacao.
+  end note
+
+  :COMMIT JPA;
+
+  :<b>201 Created</b> retornado ao cliente\nSSE mission-update enviado ao browser;
+}
+
+' ─── 2. PUBLICACAO ───────────────────────────────────────────────────────────
+partition "2 — Publicacao pos-COMMIT" {
+  :AfterCommitMissionDispatch.afterCommit()\nchama MissionCreatedEventProducer;
+
+  :<b>Kafka: missions.created</b>\nchave: missionId;
+  note right
+    <b>MissionCreatedKafkaEvent</b>
+    ─ type        : MISSION_CREATED
+    ─ missionId   : UUID
+    ─ titulo      : String
+    ─ tipoAmeaca  : enum
+    ─ prioridade  : enum
+    ─ status      : RECEBIDA
+    ─ occurredAt  : Instant
+  end note
+}
+
+' ─── 3. CONSUMO ──────────────────────────────────────────────────────────────
+partition "3 — Consumo e Ingestao" {
+  :<b>MissionCreatedConsumer</b>\n@KafkaListener\ntopic=missions.created | group=central-lj-backend\nautoStartup=${consumer-enabled:true};
+
+  :<b>MissionCreatedEventIngestionService</b>\ndeserializar JSON\nvalidar missionId != null e type == MISSION_CREATED;
+
+  if (payload valido?) then (valido)
+  else (invalido)
+    :log.error\nmensagem ignorada — offset avancado;
+    end
+  endif
+}
+
+' ─── 4. WORKFLOW ─────────────────────────────────────────────────────────────
+partition "4 — Workflow Automatico" {
+  :<b>MissionWorkflowService.processAfterCreation(missionId)</b>\nSELECT mission WHERE id = missionId;
+
+  :<b>MissionProcessingFlowStrategyResolver</b>\nresolve(mission.prioridade);
+
+  if (prioridade == CRITICA?) then (CRITICA)
+    :<b>CriticalPriorityFlow</b>\n-- PRIORIZADA\n-- EQUIPE_DESIGNADA\n-- EM_ANDAMENTO\n-- CONCLUIDA; <<#FFF0F6>>
+    note right: Pula EM_ANALISE\nresposta prioritaria
+  else (BAIXA / MEDIA / ALTA)
+    :<b>DefaultFlow</b>\n-- EM_ANALISE\n-- PRIORIZADA\n-- EQUIPE_DESIGNADA\n-- EM_ANDAMENTO\n-- CONCLUIDA; <<#EEF2FF>>
+  endif
+
+  while (proximo status no fluxo?) is (sim)
+    :UPDATE missions.status = proximo\nINSERT mission_history (KAFKA_WORKFLOW)\nSSE mission-update -> browser\nsleep 200 ms;
+  endwhile (fim do fluxo)
+
+  :status final = <b>CONCLUIDA</b>; <<#DDFBE7>>
+  end
+}
+
+' ─── 5. ERROS ────────────────────────────────────────────────────────────────
+partition "5 — Tratamento de Erros" {
+  note
+    <b>catch Exception / InterruptedException</b>
+    em qualquer passo do Workflow
+  end note
+
+  :UPDATE missions.status = <b>FALHA_PROCESSAMENTO</b>\nINSERT mission_history (KAFKA_WORKFLOW_ERRO); <<#FFE3E3>>
+  end
+}
+
+@enduml

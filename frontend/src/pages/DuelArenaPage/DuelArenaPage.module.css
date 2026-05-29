@@ -1,0 +1,68 @@
+.page { display: flex; flex-direction: column; gap: 24px; }
+.error { color: var(--status-error, #ff6b6b); font-size: 14px; }
+
+.scoreRow { display: flex; align-items: center; justify-content: center; gap: 32px; padding: 20px; }
+.scoreBlock { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.scoreLabel { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--hud-muted); }
+.scoreValue { font-size: 40px; font-weight: 700; font-style: italic; font-family: var(--font-display); color: #fff; }
+.vs { font-size: 20px; font-weight: 700; color: var(--hud-muted); }
+
+.puzzleGrid { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; padding: 20px 0; }
+.puzzleItem {
+  width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; font-style: italic; font-family: var(--font-display); color: #fff;
+  background: linear-gradient(145deg, rgba(0,209,255,0.2), rgba(13,20,32,0.95));
+  border: 1px solid rgba(0,209,255,0.3); cursor: grab;
+  clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+  transition: filter 0.15s;
+}
+.puzzleItem:hover { filter: brightness(1.2); }
+.dragging { filter: brightness(1.4); border-color: rgba(0,209,255,0.8); }
+
+.btnSubmit {
+  margin-top: 16px; padding: 12px 32px; width: 100%;
+  background: linear-gradient(180deg, rgba(0,209,255,0.35), rgba(0,100,200,0.6));
+  color: #fff; border: none; font-weight: 700; font-size: 15px; cursor: pointer;
+  clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+  transition: filter 0.2s;
+}
+.btnSubmit:hover:not(:disabled) { filter: brightness(1.15); }
+.btnSubmit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.waiting, .winnerMsg { font-size: 16px; color: var(--hud-muted); text-align: center; padding: 20px 0; }
+.winnerMsg { color: #fff; font-weight: 700; font-size: 20px; }
+
+.infiltrationBar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 0 16px;
+}
+
+.infiltrationDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 80, 100, 0.4);
+  background: rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.infiltrationDotActive {
+  border-color: #ff4d6d;
+  box-shadow: 0 0 12px rgba(255, 77, 109, 0.8);
+  transform: scale(1.2);
+}
+
+.infiltrationDotDone {
+  background: #ff4d6d;
+  border-color: #ff4d6d;
+}
+
+.missionLink {
+  display: block;
+  margin-top: 16px;
+  text-align: center;
+  color: var(--accent-info, #00d1ff);
+  font-size: 14px;
+}

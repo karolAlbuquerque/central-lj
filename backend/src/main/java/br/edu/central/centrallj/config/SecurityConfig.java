@@ -67,11 +67,13 @@ public class SecurityConfig {
         auth ->
             auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                 .permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/logout")
+                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/logout", "/api/auth/register")
                 .permitAll()
                 .requestMatchers("/api/health", "/actuator/**")
                 .permitAll()
                 .requestMatchers("/api/hello", "/api/missions/test", "/api/events/**")
+                .permitAll()
+                .requestMatchers("/ws/**")
                 .permitAll()
                 .anyRequest()
                 .authenticated());

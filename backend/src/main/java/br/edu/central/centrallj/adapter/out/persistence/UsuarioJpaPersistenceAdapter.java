@@ -5,6 +5,7 @@ import br.edu.central.centrallj.adapter.out.persistence.repository.UsuarioReposi
 import br.edu.central.centrallj.application.port.out.UsuarioPersistencePort;
 import br.edu.central.centrallj.domain.Usuario;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,6 +22,11 @@ public class UsuarioJpaPersistenceAdapter implements UsuarioPersistencePort {
   @Override
   public Optional<Usuario> findByEmailAndAtivoTrue(String email) {
     return jpa.findByEmailAndAtivoTrue(email).map(mapper::toDomain);
+  }
+
+  @Override
+  public Optional<Usuario> findById(UUID id) {
+    return jpa.findById(id).map(mapper::toDomain);
   }
 
   @Override

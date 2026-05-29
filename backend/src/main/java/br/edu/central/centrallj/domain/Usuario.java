@@ -19,6 +19,8 @@ public class Usuario {
 
   private Heroi heroi;
 
+  private Instant cooldownAvailableAt;
+
   private Instant createdAt;
 
   private Instant updatedAt;
@@ -95,6 +97,14 @@ public class Usuario {
 
   public void setHeroi(Heroi heroi) {
     this.heroi = heroi;
+  }
+
+  public Instant getCooldownAvailableAt() {
+    return cooldownAvailableAt;
+  }
+
+  public void setCooldownAvailableAt(Instant cooldownAvailableAt) {
+    this.cooldownAvailableAt = cooldownAvailableAt;
   }
 
   public Instant getCreatedAt() {

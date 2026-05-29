@@ -1,0 +1,2 @@
+ALTER TABLE duel_sessions
+  ADD COLUMN IF NOT EXISTS infiltration_progress SMALLINT NOT NULL DEFAULT 0;

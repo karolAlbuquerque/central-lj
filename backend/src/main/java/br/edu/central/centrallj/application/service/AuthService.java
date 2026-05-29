@@ -4,18 +4,22 @@ import br.edu.central.centrallj.adapter.in.web.security.JwtService;
 import br.edu.central.centrallj.application.model.AuthUserView;
 import br.edu.central.centrallj.application.model.LoginCommand;
 import br.edu.central.centrallj.application.model.LoginResult;
+import br.edu.central.centrallj.application.model.RegisterCommand;
 import br.edu.central.centrallj.application.port.in.AuthenticateUseCase;
+import br.edu.central.centrallj.application.port.in.RegisterUseCase;
 import br.edu.central.centrallj.application.port.out.UsuarioPersistencePort;
 import br.edu.central.centrallj.domain.UserRole;
 import br.edu.central.centrallj.domain.Usuario;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class AuthService implements AuthenticateUseCase {
+public class AuthService implements AuthenticateUseCase, RegisterUseCase {
 
   private final UsuarioPersistencePort usuarioPersistencePort;
   private final PasswordEncoder passwordEncoder;
@@ -48,6 +52,25 @@ public class AuthService implements AuthenticateUseCase {
   @Override
   public AuthUserView fromPrincipal(UUID id, String nome, String email, UserRole role, UUID heroiId) {
     return new AuthUserView(id, nome, email, role, heroiId);
+  }
+
+  @Override
+  @Transactional
+  public LoginResult register(RegisterCommand command) {
+    String email = command.email().trim().toLowerCase();
+    if (usuarioPersistencePort.existsByEmail(email)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já cadastrado.");
+    }
+    Usuario usuario = new Usuario();
+    usuario.setId(UUID.randomUUID());
+    usuario.setNome(command.nome().trim());
+    usuario.setEmail(email);
+    usuario.setSenhaHash(passwordEncoder.encode(command.password()));
+    usuario.setRole(command.role());
+    usuario.setAtivo(true);
+    Usuario saved = usuarioPersistencePort.save(usuario);
+    String token = jwtService.createToken(saved);
+    return new LoginResult(token, "Bearer", toView(saved));
   }
 
   public AuthUserView toView(Usuario usuario) {

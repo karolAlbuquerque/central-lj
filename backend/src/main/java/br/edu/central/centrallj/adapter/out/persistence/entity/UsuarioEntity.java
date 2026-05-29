@@ -41,6 +41,9 @@ public class UsuarioEntity {
   @JoinColumn(name = "heroi_id")
   private HeroiEntity heroi;
 
+  @Column(name = "cooldown_available_at")
+  private Instant cooldownAvailableAt;
+
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
@@ -121,6 +124,14 @@ public class UsuarioEntity {
 
   public void setHeroi(HeroiEntity heroi) {
     this.heroi = heroi;
+  }
+
+  public Instant getCooldownAvailableAt() {
+    return cooldownAvailableAt;
+  }
+
+  public void setCooldownAvailableAt(Instant cooldownAvailableAt) {
+    this.cooldownAvailableAt = cooldownAvailableAt;
   }
 
   public Instant getCreatedAt() {

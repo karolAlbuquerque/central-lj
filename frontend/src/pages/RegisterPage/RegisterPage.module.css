@@ -1,0 +1,201 @@
+.page {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(4, 8, 14, 0.38), rgba(4, 8, 14, 0.55)),
+    url("/login.png") center top / cover no-repeat;
+}
+
+.split {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 1fr minmax(380px, 480px);
+}
+
+@media (max-width: 900px) {
+  .split { grid-template-columns: 1fr; }
+}
+
+.hero {
+  position: relative;
+  padding: 48px 40px;
+  background: linear-gradient(90deg, rgba(4, 8, 14, 0.48) 0%, rgba(4, 8, 14, 0.22) 52%, rgba(4, 8, 14, 0.12) 100%);
+  border-right: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+  .hero { border-right: none; border-bottom: 1px solid var(--border); padding: 32px 24px; }
+  .heroInner { margin: 0; padding: 22px 20px; }
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
+  padding: 28px 32px 28px 28px;
+  margin: -8px 0 0 -12px;
+  clip-path: var(--hud-clip-14);
+  overflow: hidden;
+}
+
+.heroMark {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-info);
+  margin: 0 0 20px;
+  font-weight: 700;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 800;
+  font-style: italic;
+  line-height: 1.12;
+  color: var(--text);
+  margin: 0 0 18px;
+  letter-spacing: -0.02em;
+}
+
+.heroLead {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+
+.formSide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: rgba(4, 8, 14, 0.72);
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 32px;
+  clip-path: var(--hud-clip-14);
+  background: rgba(8, 14, 22, 0.88);
+  box-shadow: 0 0 0 1px rgba(0, 209, 255, 0.12), 0 24px 56px rgba(0, 0, 0, 0.55);
+}
+
+.welcome {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-info);
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  font-style: italic;
+  color: var(--text);
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 24px;
+  line-height: 1.55;
+}
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+.roleRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.roleCard {
+  padding: 12px 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  clip-path: var(--hud-clip-10);
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+
+.roleCard:hover { border-color: rgba(0,209,255,0.35); background: rgba(0,209,255,0.05); }
+.roleCard.active { border-color: rgba(0,209,255,0.6); background: rgba(0,209,255,0.08); }
+.roleCard.activeVillain { border-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.08); }
+
+.roleIcon { font-size: 22px; display: block; margin-bottom: 4px; }
+.roleLabel { font-size: 12px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; }
+.roleDesc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.input {
+  padding: 11px 14px;
+  clip-path: var(--hud-clip-10);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus { border-color: rgba(0, 209, 255, 0.5); }
+
+.btn {
+  margin-top: 6px;
+  padding: 13px;
+  clip-path: var(--hud-clip-10);
+  border: none;
+  background: linear-gradient(165deg, rgba(0,209,255,0.28), rgba(0,60,120,0.75));
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: filter 0.18s;
+}
+
+.btn:hover:not(:disabled) { filter: brightness(1.15); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.errorBox {
+  padding: 10px 14px;
+  clip-path: var(--hud-clip-10);
+  background: rgba(255, 60, 60, 0.1);
+  border: 1px solid rgba(255, 60, 60, 0.3);
+  font-size: 13px;
+  color: #ff8080;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loginLink {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.loginLink a {
+  color: var(--accent-info);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.loginLink a:hover { text-decoration: underline; }

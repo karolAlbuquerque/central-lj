@@ -13,6 +13,7 @@ import br.edu.central.centrallj.adapter.in.web.dto.HeroDetailResponse;
 import br.edu.central.centrallj.adapter.in.web.dto.HeroResponse;
 import br.edu.central.centrallj.adapter.in.web.dto.LoginRequest;
 import br.edu.central.centrallj.adapter.in.web.dto.LoginResponse;
+import br.edu.central.centrallj.adapter.in.web.dto.RegisterRequest;
 import br.edu.central.centrallj.adapter.in.web.dto.MissionDetailResponse;
 import br.edu.central.centrallj.adapter.in.web.dto.MissionHistoryEntryResponse;
 import br.edu.central.centrallj.adapter.in.web.dto.MissionResponse;
@@ -30,6 +31,8 @@ import br.edu.central.centrallj.application.model.HeroDetailView;
 import br.edu.central.centrallj.application.model.HeroView;
 import br.edu.central.centrallj.application.model.LoginCommand;
 import br.edu.central.centrallj.application.model.LoginResult;
+import br.edu.central.centrallj.application.model.RegisterCommand;
+import br.edu.central.centrallj.domain.UserRole;
 import br.edu.central.centrallj.application.model.MissionDetailView;
 import br.edu.central.centrallj.application.model.MissionHistoryEntryView;
 import br.edu.central.centrallj.application.model.MissionView;
@@ -79,6 +82,10 @@ public class WebDtoMapper {
 
   public LoginCommand toCommand(LoginRequest r) {
     return new LoginCommand(r.email(), r.password());
+  }
+
+  public RegisterCommand toRegisterCommand(RegisterRequest r) {
+    return new RegisterCommand(r.nome(), r.email(), r.password(), UserRole.valueOf(r.role()));
   }
 
   public MissionResponse toDto(MissionView v) {

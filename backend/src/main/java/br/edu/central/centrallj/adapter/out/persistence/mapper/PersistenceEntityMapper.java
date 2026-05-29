@@ -171,6 +171,7 @@ public class PersistenceEntityMapper {
     u.setRole(e.getRole());
     u.setAtivo(e.isAtivo());
     u.setHeroi(toDomainHeroiShallow(e.getHeroi()));
+    u.setCooldownAvailableAt(e.getCooldownAvailableAt());
     u.setCreatedAt(e.getCreatedAt());
     u.setUpdatedAt(e.getUpdatedAt());
     return u;
@@ -188,6 +189,7 @@ public class PersistenceEntityMapper {
     e.setRole(u.getRole());
     e.setAtivo(u.isAtivo());
     e.setHeroi(toEntityHeroiRef(u.getHeroi()));
+    e.setCooldownAvailableAt(u.getCooldownAvailableAt());
     e.setCreatedAt(u.getCreatedAt());
     e.setUpdatedAt(u.getUpdatedAt());
     return e;

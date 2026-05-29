@@ -11,7 +11,7 @@ export type AppShellNavItem = {
 };
 
 type Props = {
-  mode: "admin" | "hero";
+  mode: "admin" | "hero" | "villain";
   navItems: AppShellNavItem[];
   children: ReactNode;
 };
@@ -32,11 +32,17 @@ const HERO_HEAD = {
   sub: "Console do herói: missões designadas, prioridades e linha do tempo."
 };
 
+const VILLAIN_HEAD = {
+  title: "Sala de guerra",
+  sub: "Operações de infiltração — selecione alvos, inicie duelos e aplique sabotagem."
+};
+
 export function AppShell({ mode, navItems, children }: Props) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const shellClass = mode === "admin" ? styles.shellAdmin : styles.shellHero;
-  const head = mode === "admin" ? ADMIN_HEAD : HERO_HEAD;
+  const shellClass =
+    mode === "admin" ? styles.shellAdmin : mode === "villain" ? styles.shellVillain : styles.shellHero;
+  const head = mode === "admin" ? ADMIN_HEAD : mode === "villain" ? VILLAIN_HEAD : HERO_HEAD;
 
   return (
     <div className={`${styles.shell} ${shellClass}`}>
@@ -49,7 +55,7 @@ export function AppShell({ mode, navItems, children }: Props) {
             Central-LJ
           </p>
           <p className={styles.tagline}>
-            {mode === "admin" ? "Comando · Coordenação" : "Console operacional"}
+            {mode === "admin" ? "Comando · Coordenação" : mode === "villain" ? "Infiltração · Sabotagem" : "Console operacional"}
           </p>
         </div>
         <nav className={styles.nav}>
@@ -97,13 +103,13 @@ export function AppShell({ mode, navItems, children }: Props) {
           <div className={styles.topbarLeft}>
             <div className={styles.pill}>
               <span className={styles.pillDot} aria-hidden />
-              {mode === "admin" ? "Central de operações" : "Área do herói"}
+              {mode === "admin" ? "Central de operações" : mode === "villain" ? "Sala de guerra" : "Área do herói"}
             </div>
             <h1 className={styles.topbarTitle}>{head.title}</h1>
             <p className={styles.topbarSub}>{head.sub}</p>
           </div>
           <div className={styles.topbarRight}>
-            <span className={styles.phaseChip}>N2 · painel</span>
+            <span className={styles.phaseChip}>N3 · {mode === "villain" ? "vilão" : mode === "hero" ? "herói" : "painel"}</span>
           </div>
         </header>
         <main className={styles.content}>

@@ -1,0 +1,276 @@
+@startuml
+title Central-LJ — Modelo Entidade-Relacionamento (PostgreSQL)
+
+hide circle
+hide methods
+skinparam linetype ortho
+skinparam nodesep 55
+skinparam ranksep 75
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+skinparam class {
+  BackgroundColor      #FAFBFF
+  BorderColor          #3B5BDB
+  HeaderBackgroundColor #EEF2FF
+  FontColor            #1A1A2E
+  AttributeFontColor   #2C2C54
+  AttributeFontSize    9
+  FontSize             11
+  FontStyle            bold
+  StereotypeFontColor  #5C7CFA
+  StereotypeFontSize   9
+}
+skinparam package {
+  BackgroundColor #F8F9FA
+  BorderColor     #ADB5BD
+  FontColor       #343A40
+  FontSize        11
+  FontStyle       bold
+}
+skinparam arrow {
+  Color      #3B5BDB
+  FontColor  #555577
+  FontSize   9
+}
+
+legend top right
+  <b>Convencoes</b>
+  |= Marcador |= Significado |
+  | * campo   | NOT NULL     |
+  | campo     | nullable     |
+  | PK        | Chave primaria |
+  | FK        | Chave estrangeira |
+  | ==        | Separador FK |
+  | ..        | Separador campos |
+  | --        | Separador secao  |
+endlegend
+
+' ═══════════════════════════════════════════════════════════════
+package "Usuarios & Herois" {
+
+  class "equipes_heroicas" <<(T,#3B5BDB) tabela>> {
+    * id                    : UUID           <<PK>>
+    ..
+    * nome                  : VARCHAR(200)
+    especialidade_principal : VARCHAR(200)
+    * ativa                 : BOOLEAN = TRUE
+    * created_at            : TIMESTAMPTZ
+    * updated_at            : TIMESTAMPTZ
+  }
+
+  class "heroes" <<(T,#3B5BDB) tabela>> {
+    * id                    : UUID           <<PK>>
+    ==
+    equipe_id               : UUID           <<FK equipes_heroicas>>
+    ..
+    * nome_heroico           : VARCHAR(200)
+    nome_civil              : VARCHAR(200)
+    * especialidade          : VARCHAR(200)
+    * status_disponibilidade : VARCHAR(50)
+    * nivel                  : VARCHAR(50)
+    * ativo                  : BOOLEAN = TRUE
+    * created_at             : TIMESTAMPTZ
+    * updated_at             : TIMESTAMPTZ
+    -- INDICES --
+    idx_heroes_equipe (equipe_id)
+    idx_heroes_disponibilidade
+  }
+
+  class "usuarios" <<(T,#3B5BDB) tabela>> {
+    * id                   : UUID           <<PK>>
+    ==
+    heroi_id               : UUID           <<FK heroes>>
+    ..
+    * nome                 : VARCHAR(200)
+    * email                : VARCHAR(320)   UNIQUE
+    * senha_hash           : VARCHAR(255)
+    * role                 : VARCHAR(32)
+    * ativo                : BOOLEAN = TRUE
+    cooldown_available_at  : TIMESTAMPTZ
+    * created_at           : TIMESTAMPTZ
+    * updated_at           : TIMESTAMPTZ
+    -- CHECK --
+    role=HERO  => heroi_id NOT NULL
+    role=ADMIN => heroi_id IS NULL
+  }
+
+  "equipes_heroicas" "1" --o{ "heroes"   : equipe_id >
+  "heroes"           "1" --o| "usuarios" : heroi_id >
+}
+
+' ═══════════════════════════════════════════════════════════════
+package "Missao Operacional" {
+
+  class "missions" <<(T,#3B5BDB) tabela>> {
+    * id                    : UUID           <<PK>>
+    ==
+    heroi_responsavel_id    : UUID           <<FK heroes>>
+    equipe_responsavel_id   : UUID           <<FK equipes_heroicas>>
+    ..
+    * titulo                : VARCHAR(500)
+    descricao               : TEXT
+    * tipo_ameaca           : VARCHAR(50)
+    * prioridade            : VARCHAR(50)
+    * status                : VARCHAR(50)
+    cidade                  : VARCHAR(200)
+    bairro                  : VARCHAR(200)
+    referencia              : VARCHAR(500)
+    atribuido_em            : TIMESTAMPTZ
+    atribuido_por           : VARCHAR(200)
+    * data_criacao          : TIMESTAMPTZ
+    * ultima_atualizacao    : TIMESTAMPTZ
+    -- INDICES --
+    idx_missions_status
+    idx_missions_data_criacao
+    idx_missions_heroi
+    idx_missions_equipe
+  }
+
+  class "mission_history" <<(T,#3B5BDB) tabela>> {
+    * id              : UUID           <<PK>>
+    ==
+    * mission_id      : UUID           <<FK missions CASCADE>>
+    ..
+    status_anterior   : VARCHAR(50)
+    * status_novo     : VARCHAR(50)
+    mensagem          : TEXT
+    * origem          : VARCHAR(50)
+    * ocorrido_em     : TIMESTAMPTZ
+    -- INDICE --
+    idx_mission_history_mission_tempo
+  }
+
+  "missions" "1" *-- "0..*" "mission_history" : mission_id\nON DELETE CASCADE >
+}
+
+' ═══════════════════════════════════════════════════════════════
+package "Party Mission" {
+
+  class "player_missions" <<(T,#3B5BDB) tabela>> {
+    * id                  : UUID           <<PK>>
+    ==
+    * owner_user_id       : UUID           <<FK usuarios>>
+    started_by_user_id    : UUID           <<FK usuarios>>
+    ..
+    * titulo              : VARCHAR(300)
+    descricao             : TEXT
+    * combat_state        : VARCHAR(50) = NORMAL
+    * min_players         : INT = 1
+    party_seed            : VARCHAR(64)
+    started_at            : TIMESTAMPTZ
+    * created_at          : TIMESTAMPTZ
+    * updated_at          : TIMESTAMPTZ
+    -- INDICES --
+    idx_player_missions_owner
+    idx_player_missions_state
+  }
+
+  class "mission_members" <<(T,#3B5BDB) tabela>> {
+    * id                  : UUID           <<PK>>
+    ==
+    * mission_id          : UUID           <<FK player_missions CASCADE>>
+    * user_id             : UUID           <<FK usuarios>>
+    invited_by_user_id    : UUID           <<FK usuarios>>
+    ..
+    * role                : VARCHAR(50)
+    * invite_status       : VARCHAR(20) = ACCEPTED
+    * joined_at           : TIMESTAMPTZ
+    -- UNIQUE --
+    (mission_id, user_id)
+  }
+
+  class "mission_tasks" <<(T,#3B5BDB) tabela>> {
+    * id                  : UUID           <<PK>>
+    ==
+    * mission_id          : UUID           <<FK player_missions CASCADE>>
+    assigned_to_user_id   : UUID           <<FK usuarios>>
+    depends_on_task_id    : UUID           <<FK mission_tasks>>
+    ..
+    * title               : VARCHAR(200)
+    description           : TEXT
+    * status              : VARCHAR(50) = PENDING
+    * is_critical         : BOOLEAN = FALSE
+    puzzle_type           : VARCHAR(50)
+    * created_at          : TIMESTAMPTZ
+    * updated_at          : TIMESTAMPTZ
+  }
+
+  "player_missions" "1" *-- "1..*" "mission_members" : mission_id\nCASCADE >
+  "player_missions" "1" *-- "0..*" "mission_tasks"   : mission_id\nCASCADE >
+  "mission_tasks"         .left.>  "mission_tasks"   : depends_on_task_id\n(auto-ref)
+}
+
+' ═══════════════════════════════════════════════════════════════
+package "PvP e Duelo" {
+
+  class "duel_sessions" <<(T,#3B5BDB) tabela>> {
+    * id                   : UUID           <<PK>>
+    ==
+    * mission_id           : UUID           <<FK player_missions>>
+    * attacker_user_id     : UUID           <<FK usuarios>>
+    * defender_user_id     : UUID           <<FK usuarios>>
+    ..
+    * seed                 : VARCHAR(64)
+    * puzzle_type          : VARCHAR(50)
+    * status               : VARCHAR(50) = PENDING
+    * round_current        : INTEGER = 1
+    * round_max            : INTEGER = 1
+    * attacker_rounds_won  : INTEGER = 0
+    * defender_rounds_won  : INTEGER = 0
+    * infiltration_progress: INTEGER = 0
+    started_at             : TIMESTAMPTZ
+    finished_at            : TIMESTAMPTZ
+    * timeout_at           : TIMESTAMPTZ
+    -- INDICES --
+    idx_duel_sessions_mission
+    idx_duel_sessions_status
+  }
+
+  class "puzzle_attempts" <<(T,#3B5BDB) tabela>> {
+    * id              : UUID           <<PK>>
+    ==
+    * duel_session_id : UUID           <<FK duel_sessions>>
+    * user_id         : UUID           <<FK usuarios>>
+    ..
+    * round_number    : INTEGER
+    move_sequence     : JSONB
+    is_valid          : BOOLEAN
+    time_ms           : INTEGER
+    * submitted_at    : TIMESTAMPTZ
+    -- INDICE --
+    idx_puzzle_attempts_duel
+  }
+
+  class "sabotage_events" <<(T,#3B5BDB) tabela>> {
+    * id                : UUID           <<PK>>
+    ==
+    * duel_session_id   : UUID           <<FK duel_sessions>>
+    * mission_id        : UUID           <<FK player_missions>>
+    * attacker_user_id  : UUID           <<FK usuarios>>
+    target_user_id      : UUID           <<FK usuarios>>
+    ..
+    * sabotage_type     : VARCHAR(50)
+    * target_scope      : VARCHAR(50)
+    * applied_at        : TIMESTAMPTZ
+    expires_at          : TIMESTAMPTZ
+    reversed_at         : TIMESTAMPTZ
+    effect_payload      : JSONB
+    -- INDICE --
+    idx_sabotage_events_expires
+  }
+
+  "duel_sessions" "1" *-- "0..*" "puzzle_attempts"  : duel_session_id >
+  "duel_sessions" "1" *-- "0..*" "sabotage_events"  : duel_session_id >
+}
+
+' ═══════════════════════════════════════════════════════════════
+'  RELACIONAMENTOS ENTRE PACOTES
+' ═══════════════════════════════════════════════════════════════
+
+"heroes"          "1" --o{ "missions"        : heroi_responsavel_id >
+"equipes_heroicas" "1" --o{ "missions"       : equipe_responsavel_id >
+"usuarios"        "1" --o{ "player_missions" : owner_user_id >
+"player_missions"  "1" --o{ "duel_sessions"  : mission_id >
+
+@enduml

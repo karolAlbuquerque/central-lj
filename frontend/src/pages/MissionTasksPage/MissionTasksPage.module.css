@@ -1,0 +1,321 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.error { color: var(--accent-danger); font-size: 14px; margin: 0; }
+
+/* ── Party intro cinematic ───────────────────────────── */
+.partyIntro {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  background: #050812;
+  overflow: hidden;
+  animation: introFadeOut 5.2s ease forwards;
+}
+
+.partyIntroStreaks {
+  position: absolute;
+  inset: 0;
+}
+
+.partyStreak {
+  position: absolute;
+  left: -45%;
+  width: 160%;
+  height: 16%;
+  top: calc(10% + (var(--intro-delay, 0ms) / 260ms) * 14%);
+  background: linear-gradient(90deg, transparent, var(--intro-color, #00d1ff), transparent);
+  filter: blur(7px);
+  transform: skewX(-20deg);
+  animation: streakRun 1.2s ease-out var(--intro-delay, 0ms) both;
+}
+
+.partyIntroNames {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.partyIntroName {
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  font-family: var(--font-display);
+  font-size: clamp(20px, 4.2vw, 42px);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e8f5ff;
+  text-shadow: 0 0 22px rgba(0, 209, 255, 0.45);
+  animation: introNameIn 0.52s ease forwards;
+}
+
+.partyIntroFinal {
+  position: absolute;
+  bottom: 16%;
+  font-family: var(--font-display);
+  font-size: clamp(18px, 3.4vw, 34px);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  opacity: 0;
+  animation: introFinalIn 0.9s ease 3.2s forwards;
+}
+
+@keyframes streakRun {
+  0% { transform: translateX(0) skewX(-20deg); opacity: 0; }
+  18% { opacity: 1; }
+  100% { transform: translateX(120%) skewX(-20deg); opacity: 0.1; }
+}
+
+@keyframes introNameIn {
+  0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes introFinalIn {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes introFadeOut {
+  0%, 88% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
+
+/* ── Mission context strip ──────────────────────────── */
+.missionContext {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  clip-path: var(--hud-clip-8);
+}
+
+.contextMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+
+.metaGroup { display: flex; align-items: center; gap: 7px; }
+
+.metaLabel {
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--hud-muted);
+}
+
+.metaValue { font-size: 13px; font-weight: 600; color: var(--text); }
+
+.metaDot { color: rgba(255,255,255,0.18); font-size: 12px; user-select: none; }
+
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  clip-path: var(--hud-clip-6);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(to right, var(--accent-info), var(--accent-success));
+  transition: width 0.6s var(--motion-ease);
+}
+
+.progressLabel {
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  font-size: 11px; letter-spacing: 0.06em;
+  color: var(--hud-muted);
+  white-space: nowrap;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ── My tasks list ──────────────────────────────────── */
+.taskList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.taskItem {
+  position: relative;
+  padding: 14px 16px 14px 20px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  clip-path: var(--hud-clip-8);
+}
+
+.taskItem::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  background: var(--task-accent, rgba(160,170,181,0.25));
+  box-shadow: 0 0 6px var(--task-accent, transparent);
+}
+
+/* mine: default cyan, overridden per status */
+.mine {
+  --task-accent: var(--accent-info);
+  border-color: rgba(0,209,255,0.2);
+  background: rgba(0,209,255,0.03);
+}
+
+.mine.s_DONE {
+  --task-accent: var(--accent-success);
+  border-color: rgba(46,229,157,0.18);
+  background: rgba(46,229,157,0.02);
+}
+
+.mine.s_BLOCKED {
+  --task-accent: var(--accent-danger);
+  border-color: rgba(255,77,77,0.2);
+  background: rgba(255,77,77,0.02);
+}
+
+.mine.s_AWAITING_PUZZLE {
+  --task-accent: var(--accent-warn);
+  border-color: rgba(240,180,41,0.2);
+  background: rgba(240,180,41,0.02);
+}
+
+.taskHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.taskTitle { font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.35; }
+.badges { display: flex; gap: 6px; flex-shrink: 0; align-items: center; flex-wrap: wrap; }
+
+/* ── Status badges ──────────────────────────────────── */
+.statusBadge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; padding: 3px 9px; font-weight: 700;
+  font-family: var(--font-display); font-style: italic; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--hud-muted);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  clip-path: var(--hud-clip-6);
+}
+
+.statusBadge.s_DONE    { color: var(--accent-success); border-color: rgba(46,229,157,0.35);  background: rgba(46,229,157,0.08); }
+.statusBadge.s_BLOCKED { color: var(--accent-danger);  border-color: rgba(255,77,77,0.35);   background: rgba(255,77,77,0.08); }
+.statusBadge.s_AWAITING_PUZZLE { color: var(--accent-warn); border-color: rgba(240,180,41,0.35); background: rgba(240,180,41,0.08); }
+.statusBadge.s_IN_PROGRESS     { color: var(--accent-info); border-color: rgba(0,209,255,0.3);   background: rgba(0,209,255,0.08); }
+
+/* status badge inherited from parent (otherCard context) */
+.s_DONE .statusBadge    { color: var(--accent-success); border-color: rgba(46,229,157,0.35);  background: rgba(46,229,157,0.08); }
+.s_BLOCKED .statusBadge { color: var(--accent-danger);  border-color: rgba(255,77,77,0.35);   background: rgba(255,77,77,0.08); }
+.s_AWAITING_PUZZLE .statusBadge { color: var(--accent-warn); border-color: rgba(240,180,41,0.35); background: rgba(240,180,41,0.08); }
+.s_IN_PROGRESS .statusBadge     { color: var(--accent-info); border-color: rgba(0,209,255,0.3);   background: rgba(0,209,255,0.08); }
+
+.criticalBadge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; padding: 3px 9px; font-weight: 700;
+  font-family: var(--font-display); font-style: italic; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #facc15; background: rgba(250,204,21,0.1); border: 1px solid rgba(250,204,21,0.3);
+  clip-path: var(--hud-clip-6);
+}
+
+.taskDesc { font-size: 13px; color: var(--hud-muted); margin: 8px 0 0; line-height: 1.45; }
+.puzzleTypeHint {
+  font-size: 12px; color: var(--accent-warn); margin: 8px 0 0;
+  font-family: var(--font-display); font-style: italic; letter-spacing: 0.04em;
+}
+
+.btnLink {
+  font-family: var(--font-display); font-style: italic; font-weight: 600;
+  font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--accent-info);
+  text-decoration: none;
+}
+
+.btnAction {
+  margin-top: 14px;
+  padding: 9px 18px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display); font-weight: 700; font-style: italic;
+  font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text);
+  background: linear-gradient(165deg, rgba(0,209,255,0.3) 0%, rgba(0,90,180,0.55) 100%);
+  clip-path: var(--hud-clip-8);
+  box-shadow: 0 0 0 1px rgba(0,209,255,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+  text-shadow: 0 0 8px rgba(0,209,255,0.35);
+}
+.btnAction:hover:not(:disabled) {
+  filter: brightness(1.18);
+  box-shadow: 0 0 0 1px rgba(0,209,255,0.55), 0 0 16px rgba(0,209,255,0.18);
+}
+.btnAction:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.doneMsg { margin: 10px 0 0; font-size: 13px; color: var(--accent-success); }
+
+/* ── Other tasks — compact card grid ────────────────── */
+.otherGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.otherCard {
+  position: relative;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 10px;
+  padding: 12px 14px 12px 18px;
+  min-height: 68px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  clip-path: var(--hud-clip-8);
+}
+
+.otherCard::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 2px;
+  background: var(--task-accent, rgba(160,170,181,0.25));
+}
+
+.otherCard.s_DONE    { --task-accent: var(--accent-success); border-color: rgba(46,229,157,0.15); }
+.otherCard.s_BLOCKED { --task-accent: var(--accent-danger);  border-color: rgba(255,77,77,0.18); }
+.otherCard.s_AWAITING_PUZZLE { --task-accent: var(--accent-warn); border-color: rgba(240,180,41,0.18); }
+.otherCard.s_IN_PROGRESS {
+  --task-accent: var(--accent-info);
+  border-color: rgba(0,209,255,0.18);
+  background: rgba(0,209,255,0.03);
+}
+
+/* ── Puzzle internals (kept for backwards compat) ───── */
+.puzzleBox { margin-top: 12px; }
+.puzzleHint { font-size: 12px; color: var(--hud-muted); margin: 0 0 10px; }
+.revealBox {
+  margin-bottom: 10px; padding: 10px 12px;
+  border: 1px solid rgba(250,204,21,0.35); background: rgba(250,204,21,0.1);
+  color: var(--text); font-size: 24px; font-weight: 800; letter-spacing: 0.25em; text-align: center;
+}
+.inputRow { display: flex; gap: 8px; margin-bottom: 10px; }
+.inputCell {
+  width: 40px; height: 40px;
+  border: 1px solid rgba(0,209,255,0.3); background: rgba(0,209,255,0.1);
+  color: var(--text); display: inline-flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.keypad { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.keypadBtn {
+  border: 1px solid rgba(0,209,255,0.35); background: rgba(0,209,255,0.12);
+  color: var(--text); height: 36px; font-weight: 700; cursor: pointer;
+}
+.keypadBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.keypadActions { display: flex; gap: 8px; margin-bottom: 8px; }
+.btnActionSecondary {
+  padding: 6px 10px; border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: var(--text); cursor: pointer;
+}

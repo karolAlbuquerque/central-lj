@@ -3,6 +3,7 @@ package br.edu.central.centrallj.adapter.in.web.exception;
 import br.edu.central.centrallj.application.exception.BadRequestException;
 import br.edu.central.centrallj.application.exception.ResourceNotFoundException;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,11 +38,25 @@ public class ApiExceptionHandler {
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
+    Map<String, String> fieldErrors = new LinkedHashMap<>();
+    ex.getBindingResult()
+        .getFieldErrors()
+        .forEach(
+            fe -> {
+              if (!fieldErrors.containsKey(fe.getField())) {
+                fieldErrors.put(fe.getField(), fe.getDefaultMessage());
+              }
+            });
+    String message =
+        fieldErrors.isEmpty()
+            ? "Requisição inválida."
+            : fieldErrors.values().iterator().next();
     return ResponseEntity.status(HttpStatus.BAD_REQUEST)
         .body(
             Map.of(
                 "ok", false,
-                "message", "Requisição inválida.",
+                "message", message,
+                "errors", fieldErrors,
                 "timestamp", Instant.now().toString()));
   }
 

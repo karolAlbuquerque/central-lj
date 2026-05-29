@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { HeroAvailabilityBadge } from "../../components/HeroAvailabilityBadge/HeroAvailabilityBadge";
+import { HERO_GLTF_VIEW_PRESET } from "../../components/GltfHeroViewer/heroViewPreset";
 import { LoadingState } from "../../components/LoadingState/LoadingState";
 import { PriorityBadge } from "../../components/PriorityBadge/PriorityBadge";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
@@ -9,6 +10,12 @@ import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
 import { api } from "../../services/api";
 import type { HeroDetail } from "../../types/mission";
 import styles from "./HeroDetailPage.module.css";
+
+const GltfHeroViewer = lazy(() =>
+  import("../../components/GltfHeroViewer/GltfHeroViewer").then((m) => ({ default: m.GltfHeroViewer }))
+);
+
+const HERO_DETAIL_MODEL = "/fortnite_aquaman__chapter_2_season_3_bp_skin.glb";
 
 export function HeroDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -66,65 +73,80 @@ export function HeroDetailPage() {
         {backLabel}
       </Link>
 
-      <header className={styles.heroHead}>
-        <div>
-          <p className={styles.kicker}>Registro na central</p>
-          <h1 className={styles.title}>{h.nomeHeroico}</h1>
-          <p className={styles.civil}>{h.nomeCivil ? `Nome civil: ${h.nomeCivil}` : "Nome civil não informado"}</p>
-        </div>
-        <div className={styles.headBadges}>
-          <HeroAvailabilityBadge status={h.statusDisponibilidade} />
-          {!h.ativo ? <span className={styles.inactivePill}>Inativo</span> : null}
-        </div>
-      </header>
+      <div className={styles.shell}>
+        <div className={styles.mainContent}>
+          <header className={styles.heroHead}>
+            <div>
+              <p className={styles.kicker}>Registro na central</p>
+              <h1 className={styles.title}>{h.nomeHeroico}</h1>
+              <p className={styles.civil}>{h.nomeCivil ? `Nome civil: ${h.nomeCivil}` : "Nome civil não informado"}</p>
+            </div>
+            <div className={styles.headBadges}>
+              <HeroAvailabilityBadge status={h.statusDisponibilidade} />
+              {!h.ativo ? <span className={styles.inactivePill}>Inativo</span> : null}
+            </div>
+          </header>
 
-      <SectionCard title="Dados operacionais">
-        <div className={styles.metaGrid}>
-          <div>
-            <span className={styles.metaLabel}>Especialidade</span>
-            <p className={styles.metaValue}>{h.especialidade}</p>
-          </div>
-          <div>
-            <span className={styles.metaLabel}>Nível</span>
-            <p className={styles.metaValue}>{h.nivel}</p>
-          </div>
-          <div>
-            <span className={styles.metaLabel}>Equipe</span>
-            <p className={styles.metaValue}>
-              {h.equipe ? (
-                <Link className={styles.link} to={`/equipes/${h.equipe.id}`}>
-                  {h.equipe.nome}
-                </Link>
-              ) : (
-                "—"
-              )}
-            </p>
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Missões como responsável direto"
-        hint="Operações em que este herói foi designado individualmente."
-      >
-        {data.missoes.length === 0 ? (
-          <p className={styles.muted}>Nenhuma missão atribuída diretamente a este herói.</p>
-        ) : (
-          <div className={styles.missionList}>
-            {data.missoes.map((m) => (
-              <div key={m.id} className={styles.missionRow}>
-                <Link className={styles.missionTitle} to={`/missoes/${m.id}`}>
-                  {m.titulo}
-                </Link>
-                <div className={styles.missionBadges}>
-                  <PriorityBadge prioridade={m.prioridade} />
-                  <StatusBadge status={m.status} />
-                </div>
+          <SectionCard title="Dados operacionais">
+            <div className={styles.metaGrid}>
+              <div>
+                <span className={styles.metaLabel}>Especialidade</span>
+                <p className={styles.metaValue}>{h.especialidade}</p>
               </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
+              <div>
+                <span className={styles.metaLabel}>Nível</span>
+                <p className={styles.metaValue}>{h.nivel}</p>
+              </div>
+              <div>
+                <span className={styles.metaLabel}>Equipe</span>
+                <p className={styles.metaValue}>
+                  {h.equipe ? (
+                    <Link className={styles.link} to={`/equipes/${h.equipe.id}`}>
+                      {h.equipe.nome}
+                    </Link>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Missões como responsável direto"
+            hint="Operações em que este herói foi designado individualmente."
+          >
+            {data.missoes.length === 0 ? (
+              <p className={styles.muted}>Nenhuma missão atribuída diretamente a este herói.</p>
+            ) : (
+              <div className={styles.missionList}>
+                {data.missoes.map((m) => (
+                  <div key={m.id} className={styles.missionRow}>
+                    <Link className={styles.missionTitle} to={`/missoes/${m.id}`}>
+                      {m.titulo}
+                    </Link>
+                    <div className={styles.missionBadges}>
+                      <PriorityBadge prioridade={m.prioridade} />
+                      <StatusBadge status={m.status} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+        </div>
+
+        <aside className={styles.viewerCol}>
+          <Suspense fallback={null}>
+            <GltfHeroViewer
+              modelUrl={HERO_DETAIL_MODEL}
+              {...HERO_GLTF_VIEW_PRESET}
+              height={480}
+              enableMouseOrbit
+            />
+          </Suspense>
+        </aside>
+      </div>
     </div>
   );
 }

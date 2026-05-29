@@ -1,25 +1,36 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import { HeroAvailabilityBadge } from "../../components/HeroAvailabilityBadge/HeroAvailabilityBadge";
 import { LoadingState } from "../../components/LoadingState/LoadingState";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
-import { PriorityBadge } from "../../components/PriorityBadge/PriorityBadge";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
 import { StatCard } from "../../components/StatCard/StatCard";
-import { StatusBadge } from "../../components/StatusBadge/StatusBadge";
 import { api } from "../../services/api";
-import type { HeroDetail, Mission } from "../../types/mission";
+import type { HeroDetail } from "../../types/mission";
+import type { Mission, MissionCombatState } from "../../types/pvp";
 import styles from "./HeroAreaPage.module.css";
 
-const DONE: Mission["status"] = "CONCLUIDA";
+const MARTIAN_MODEL = "/martian_manhunter_lowpoly.glb";
 
-function sortUrgent(a: Mission, b: Mission): number {
-  const p = { CRITICA: 0, ALTA: 1, MEDIA: 2, BAIXA: 3 };
-  const d = p[a.prioridade] - p[b.prioridade];
-  if (d !== 0) return d;
-  return new Date(a.ultimaAtualizacao).getTime() - new Date(b.ultimaAtualizacao).getTime();
-}
+const GltfHeroViewer = lazy(() =>
+  import("../../components/GltfHeroViewer/GltfHeroViewer").then((m) => ({ default: m.GltfHeroViewer }))
+);
+
+const STATE_LABEL: Record<MissionCombatState, string> = {
+  LOBBY: "Lobby",
+  ACTIVE: "Ativa",
+  NORMAL: "Normal",
+  ALERTA_INFILTRACAO: "Alerta",
+  EM_DUELO: "Em duelo",
+  SABOTADA: "Sabotada",
+  DEFENDIDA: "Defendida",
+  SEM_CHEFE: "Sem chefe",
+  EM_CRISE: "Em crise",
+  COMPROMETIDA: "Comprometida"
+};
+
+const DONE: MissionCombatState = "COMPROMETIDA";
 
 export function HeroAreaPage() {
   const { user } = useAuth();
@@ -32,7 +43,7 @@ export function HeroAreaPage() {
     setLoading(true);
     setErr(null);
     try {
-      const my = await api.listMyMissions();
+      const my = await api.listMissions();
       setMissions(my);
       if (user?.heroiId) {
         try {
@@ -54,10 +65,11 @@ export function HeroAreaPage() {
     void load();
   }, [load]);
 
-  const open = missions.filter((m) => m.status !== DONE);
-  const done = missions.filter((m) => m.status === DONE);
-  const urgent = [...open].sort(sortUrgent)[0];
-
+  const open = missions.filter((m) => m.combatState !== DONE);
+  const done = missions.filter((m) => m.combatState === DONE);
+  const urgent = [...open].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  )[0];
   const nomeHeroico = detail?.heroi.nomeHeroico;
 
   if (loading) {
@@ -70,84 +82,99 @@ export function HeroAreaPage() {
 
   return (
     <div className={styles.page}>
-      <PageHeader
-        kicker="Console do herói"
-        title={nomeHeroico ? `${nomeHeroico}` : `Olá, ${user?.nome ?? "operador"}`}
-        description={
-          <>
-            Acompanhe operações designadas a você. Somente missões em que você é o{" "}
-            <strong>responsável atual</strong> aparecem aqui. Atualizações em tempo quase real via fluxo da
-            central.
-          </>
-        }
-        actions={
-          <Link className={styles.btnPrimary} to="/heroi/minhas-missoes">
-            Minhas missões
-          </Link>
-        }
-      />
+      <div className={styles.heroGrid}>
+        <div className={styles.heroContent}>
+          <PageHeader
+            kicker="Console do herói"
+            title={nomeHeroico ? `${nomeHeroico}` : `Olá, ${user?.nome ?? "operador"}`}
+            description="Acompanhe as missões em que você participa e coordene sua equipe."
+            actions={
+              <Link className={styles.btnPrimary} to="/missoes">
+                Ver missões
+              </Link>
+            }
+          />
 
-      {detail ? (
-        <div className={styles.profileStrip}>
-          <div>
-            <span className={styles.stripLabel}>Disponibilidade</span>
-            <HeroAvailabilityBadge status={detail.heroi.statusDisponibilidade} />
-          </div>
-          <div>
-            <span className={styles.stripLabel}>Equipe</span>
-            <span className={styles.stripValue}>
+          {detail ? (
+            <div className={styles.profileStrip}>
+              <div>
+                <span className={styles.stripLabel}>Status</span>
+                <HeroAvailabilityBadge status={detail.heroi.statusDisponibilidade} />
+              </div>
+              <div>
+                <span className={styles.stripLabel}>Especialidade</span>
+                <p className={styles.stripValue}>{detail.heroi.especialidade}</p>
+              </div>
+              <div>
+                <span className={styles.stripLabel}>Nível</span>
+                <p className={styles.stripValue}>{detail.heroi.nivel}</p>
+              </div>
               {detail.heroi.equipe ? (
-                <Link className={styles.link} to={`/equipes/${detail.heroi.equipe.id}`}>
-                  {detail.heroi.equipe.nome}
-                </Link>
-              ) : (
-                "—"
-              )}
-            </span>
-          </div>
-          {user?.heroiId ? (
-            <Link className={styles.btnGhost} to={`/herois/${user.heroiId}`}>
-              Ficha completa
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className={styles.metrics}>
-        <StatCard label="Missões atribuídas" value={missions.length} variant="info" />
-        <StatCard label="Em aberto" value={open.length} hint="Exclui concluídas" variant="warn" />
-        <StatCard label="Concluídas" value={done.length} variant="success" />
-      </div>
-
-      {urgent ? (
-        <SectionCard
-          title="Missão mais urgente"
-          variant="alert"
-          hint="Ordenada por prioridade e pela última atualização."
-        >
-          <div className={styles.urgentCard}>
-            <Link className={styles.urgentTitle} to={`/missoes/${urgent.id}`}>
-              {urgent.titulo}
-            </Link>
-            <div className={styles.urgentMeta}>
-              <PriorityBadge prioridade={urgent.prioridade} />
-              <StatusBadge status={urgent.status} />
-              <span className={styles.muted}>{urgent.tipoAmeaca.replaceAll("_", " ")}</span>
+                <div>
+                  <span className={styles.stripLabel}>Equipe</span>
+                  <p className={styles.stripValue}>{detail.heroi.equipe.nome}</p>
+                </div>
+              ) : null}
+              {detail.heroi.nomeCivil ? (
+                <div>
+                  <span className={styles.stripLabel}>Nome civil</span>
+                  <p className={styles.stripValue}>{detail.heroi.nomeCivil}</p>
+                </div>
+              ) : null}
             </div>
-          </div>
-        </SectionCard>
-      ) : (
-        <SectionCard title="Missão mais urgente" hint="Sem missões em aberto no momento.">
-          <p className={styles.muted}>Quando houver designações ativas, a mais prioritária aparecerá aqui.</p>
-        </SectionCard>
-      )}
+          ) : null}
 
-      <SectionCard title="Próximos passos">
-        <ul className={styles.hintList}>
-          <li>Revise <Link to="/heroi/minhas-missoes">todas as missões</Link> e abra o dossiê para linha do tempo.</li>
-          <li>Mantenha sua disponibilidade alinhada com a coordenação (atualização é feita no cadastro).</li>
-        </ul>
-      </SectionCard>
+          <div className={styles.metrics}>
+            <StatCard label="Missões ativas" value={open.length} variant="info" />
+            <StatCard label="Concluídas" value={done.length} variant="success" />
+          </div>
+
+          {urgent ? (
+            <SectionCard title="Prioridade imediata">
+              <Link className={styles.urgentTitle} to={`/missoes/${urgent.id}`}>
+                {urgent.titulo}
+              </Link>
+              <p className={styles.urgentMeta}>{STATE_LABEL[urgent.combatState]}</p>
+            </SectionCard>
+          ) : null}
+
+          <SectionCard title="Ações rápidas">
+            <div className={styles.quickActions}>
+              <Link className={styles.btnPrimary} to="/missoes">
+                Minhas missões
+              </Link>
+              <Link className={styles.btnGhost} to="/missoes/nova">
+                Nova missão
+              </Link>
+            </div>
+            <ul className={styles.tips}>
+              <li>
+                Crie uma <Link to="/missoes/nova">missão</Link>, convide aliados e fique alerta a
+                infiltrações.
+              </li>
+              <li>
+                Gerencie <Link to="/missoes">tarefas e equipe</Link> na sala de comando de cada
+                missão.
+              </li>
+            </ul>
+          </SectionCard>
+        </div>
+
+        <div className={styles.viewerCol}>
+          <Suspense fallback={null}>
+            <GltfHeroViewer
+              modelUrl={MARTIAN_MODEL}
+              height={540}
+              normalizeDimensions
+              normalizedTargetSize={2.0}
+              cameraFov={48}
+              cameraPosition={[0, 0.1, 8]}
+              autoPlayAnimations
+              enableMouseOrbit
+            />
+          </Suspense>
+        </div>
+      </div>
     </div>
   );
 }

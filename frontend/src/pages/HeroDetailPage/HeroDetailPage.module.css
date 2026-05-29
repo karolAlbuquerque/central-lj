@@ -4,6 +4,36 @@
   gap: 20px;
 }
 
+.shell {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 0;
+  align-items: start;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.viewerCol {
+  overflow: hidden;
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+
+@media (max-width: 1000px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .viewerCol {
+    display: none;
+  }
+}
+
 .back {
   color: var(--accent-info);
   text-decoration: none;

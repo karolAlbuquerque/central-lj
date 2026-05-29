@@ -1,0 +1,244 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+.error { color: var(--accent-danger); font-size: 14px; margin: 0; }
+
+/* ── Mission identity strip ─────────────────────────── */
+.missionMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 10px 18px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  clip-path: var(--hud-clip-8);
+}
+
+.metaGroup { display: flex; align-items: center; gap: 7px; }
+
+.metaLabel {
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--hud-muted);
+}
+
+.metaValue {
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+
+.metaValueDanger { color: var(--accent-danger); }
+.metaValueWarn   { color: var(--accent-warn); }
+
+.metaDot { color: rgba(255,255,255,0.18); font-size: 12px; user-select: none; }
+
+/* ── 2-column content grid ──────────────────────────── */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .contentGrid { grid-template-columns: 1fr; }
+}
+
+/* ── Members ─────────────────────────────────────────── */
+.memberList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.memberItem {
+  position: relative;
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  clip-path: var(--hud-clip-8);
+}
+
+.memberItem::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 3px;
+  background: var(--member-accent, rgba(160,170,181,0.3));
+  box-shadow: 0 0 6px var(--member-accent, transparent);
+}
+
+.memberChefe {
+  --member-accent: var(--accent-gold);
+  border-color: rgba(212,168,83,0.25);
+  background: linear-gradient(to right, rgba(212,168,83,0.08), rgba(212,168,83,0.02) 48px, rgba(255,255,255,0.03) 96px);
+}
+
+.memberVillain {
+  --member-accent: var(--accent-danger);
+  border-color: rgba(255,77,77,0.25);
+  background: linear-gradient(to right, rgba(255,77,77,0.08), rgba(255,77,77,0.02) 48px, rgba(255,255,255,0.03) 96px);
+}
+
+.memberName { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.memberRole {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  clip-path: var(--hud-clip-6);
+  font-size: 9px; font-weight: 700;
+  font-family: var(--font-display); font-style: italic;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--hud-muted);
+}
+
+.memberChefe .memberRole {
+  background: rgba(212,168,83,0.14); border-color: rgba(212,168,83,0.4); color: var(--accent-gold);
+}
+
+.memberVillain .memberRole {
+  background: rgba(255,77,77,0.1); border-color: rgba(255,77,77,0.35); color: var(--accent-danger);
+}
+
+/* ── Task create (inline inside tasks card) ─────────── */
+.taskCreate { margin-bottom: 4px; }
+
+.taskCreateLabel {
+  margin: 0 0 10px;
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent-info);
+}
+
+.taskForm { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+
+.createDivider {
+  margin: 18px 0;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0,209,255,0.2), transparent 70%);
+}
+
+/* ── Task groups (status-grouped card grid) ─────────── */
+.taskGroups { display: flex; flex-direction: column; gap: 18px; }
+.taskGroup  { display: flex; flex-direction: column; gap: 8px; }
+
+.group_IN_PROGRESS     { --group-color: var(--accent-info); }
+.group_AWAITING_PUZZLE { --group-color: var(--accent-warn); }
+.group_PENDING         { --group-color: var(--hud-muted); }
+.group_BLOCKED         { --group-color: var(--accent-danger); }
+.group_DONE            { --group-color: var(--accent-success); }
+
+.taskGroupHeader { display: flex; align-items: center; gap: 8px; }
+
+.taskGroupLabel {
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--group-color, var(--hud-muted));
+  white-space: nowrap;
+}
+
+.taskGroupCount {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; padding: 1px 6px;
+  clip-path: var(--hud-clip-6);
+  font-size: 11px; font-weight: 700; font-family: var(--font-display);
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--group-color, var(--hud-muted));
+}
+
+.taskGroupLine {
+  flex: 1; height: 1px;
+  background: linear-gradient(to right, var(--group-color, rgba(160,170,181,0.2)), transparent);
+  opacity: 0.3;
+}
+
+.taskGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.taskCard {
+  position: relative;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+  padding: 11px 12px 11px 16px;
+  min-height: 68px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  clip-path: var(--hud-clip-8);
+}
+
+.taskCard::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px; bottom: 8px;
+  width: 2px;
+  background: var(--task-accent, rgba(160,170,181,0.25));
+}
+
+.task_DONE    { --task-accent: var(--accent-success); border-color: rgba(46,229,157,0.18); }
+.task_BLOCKED { --task-accent: var(--accent-danger);  border-color: rgba(255,77,77,0.2); }
+.task_AWAITING_PUZZLE { --task-accent: var(--accent-warn); border-color: rgba(240,180,41,0.2); }
+.task_IN_PROGRESS {
+  --task-accent: var(--accent-info);
+  border-color: rgba(0,209,255,0.22);
+  background: rgba(0,209,255,0.03);
+}
+
+.taskTitle { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35; }
+.taskBadges { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+.criticalBadge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; font-size: 9px; font-weight: 700;
+  font-family: var(--font-display); font-style: italic; letter-spacing: 0.08em; text-transform: uppercase;
+  background: rgba(250,204,21,0.1); color: #facc15; border: 1px solid rgba(250,204,21,0.3);
+  clip-path: var(--hud-clip-6);
+}
+
+.puzzleTypeTag {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px;
+  clip-path: var(--hud-clip-6);
+  font-size: 9px; font-weight: 700;
+  font-family: var(--font-display); font-style: italic; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--accent-info); background: rgba(0,209,255,0.07); border: 1px solid rgba(0,209,255,0.25);
+}
+
+/* ── Forms ───────────────────────────────────────────── */
+.inviteRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+.actionsRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+
+.input {
+  flex: 1; min-width: 160px; padding: 9px 12px; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12); color: var(--text); font-size: 13px;
+  clip-path: var(--hud-clip-8); outline: none;
+}
+.input:focus {
+  border-color: rgba(0,209,255,0.5);
+  box-shadow: 0 0 0 1px rgba(0,209,255,0.18);
+}
+.checkLabel { font-size: 13px; color: var(--hud-muted); display: flex; align-items: center; gap: 6px; }
+.fieldLabel { font-size: 12px; color: var(--hud-muted); display: flex; flex-direction: column; gap: 6px; min-width: 200px; }
+
+.btnPrimary {
+  padding: 9px 18px;
+  background: linear-gradient(165deg, rgba(0,209,255,0.28) 0%, rgba(0,90,180,0.52) 100%);
+  color: var(--text); border: none;
+  font-family: var(--font-display); font-weight: 700; font-style: italic;
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+  cursor: pointer;
+  clip-path: var(--hud-clip-8);
+  box-shadow: 0 0 0 1px rgba(0,209,255,0.38), inset 0 1px 0 rgba(255,255,255,0.1);
+  text-shadow: 0 0 8px rgba(0,209,255,0.4);
+}
+.btnPrimary:hover:not(:disabled) {
+  filter: brightness(1.18);
+  box-shadow: 0 0 0 1px rgba(0,209,255,0.58), 0 0 18px rgba(0,209,255,0.2);
+}
+.btnPrimary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btnSecondary {
+  padding: 9px 16px; background: rgba(255,255,255,0.06); color: var(--hud-muted);
+  border: 1px solid rgba(255,255,255,0.12);
+  font-family: var(--font-display); font-weight: 600; font-style: italic;
+  font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+  text-decoration: none; cursor: pointer;
+  clip-path: var(--hud-clip-8);
+}
+.btnSecondary:hover { color: var(--text); border-color: rgba(0,209,255,0.3); }

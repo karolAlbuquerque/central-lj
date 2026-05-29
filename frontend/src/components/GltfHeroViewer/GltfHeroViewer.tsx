@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Center, OrbitControls, useAnimations, useGLTF } from "@react-three/drei";
 import { Box3, NoToneMapping, PCFSoftShadowMap, SRGBColorSpace, Texture, Vector3 } from "three";
@@ -28,6 +28,14 @@ export type GltfHeroViewerProps = {
   modelRotation?: readonly [number, number, number];
   /** Habilita rotação manual com mouse (OrbitControls). */
   enableMouseOrbit?: boolean;
+  /**
+   * Limites do ângulo polar (vertical) do OrbitControls em radianos.
+   * Default: restringe a ±25° do horizonte para evitar corte do modelo.
+   */
+  minPolarAngle?: number;
+  maxPolarAngle?: number;
+  /** Altura fixa do canvas em px. Sobrescreve o cálculo padrão baseado em viewport. */
+  height?: number;
 };
 
 function ClearSceneBackground() {
@@ -191,6 +199,8 @@ function Scene({
   );
 }
 
+const HALF_PI = Math.PI / 2;
+
 export function GltfHeroViewer({
   modelUrl,
   scale = 3.45,
@@ -201,14 +211,21 @@ export function GltfHeroViewer({
   normalizedTargetSize = 2.35,
   autoPlayAnimations = true,
   modelRotation = [0, 0, 0] as const,
-  enableMouseOrbit = false
+  enableMouseOrbit = false,
+  minPolarAngle = HALF_PI,
+  maxPolarAngle = HALF_PI,
+  height
 }: GltfHeroViewerProps) {
   useEffect(() => {
     useGLTF.preload(modelUrl);
   }, [modelUrl]);
 
+  const wrapStyle = height
+    ? ({ "--gltf-hero-stage-h": `${height}px` } as React.CSSProperties)
+    : undefined;
+
   return (
-    <div className={styles.wrap} aria-hidden>
+    <div className={styles.wrap} style={wrapStyle} aria-hidden>
       <Suspense fallback={<div className={styles.fallback}>Carregando modelo…</div>}>
         <Canvas
           className={styles.canvas}
@@ -239,10 +256,13 @@ export function GltfHeroViewer({
             <OrbitControls
               makeDefault
               enablePan={false}
+              enableZoom={false}
               enableDamping
               dampingFactor={0.08}
               minDistance={3}
               maxDistance={28}
+              minPolarAngle={minPolarAngle}
+              maxPolarAngle={maxPolarAngle}
             />
           ) : null}
           <Scene

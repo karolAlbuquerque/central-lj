@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell } from "../../components/AppShell/AppShell";
-import { IconHero, IconTarget, IconUserCircle } from "../../components/NavIcons/NavIcons";
+import { IconHero, IconPlus, IconTarget, IconUserCircle } from "../../components/NavIcons/NavIcons";
 import { useAuth } from "../../auth/AuthContext";
 
 export function HeroLayout({ children }: { children: ReactNode }) {
@@ -8,7 +8,8 @@ export function HeroLayout({ children }: { children: ReactNode }) {
 
   const items = [
     { to: "/heroi/area", label: "Minha área", icon: <IconUserCircle /> },
-    { to: "/heroi/minhas-missoes", label: "Minhas missões", icon: <IconTarget /> }
+    { to: "/missoes", label: "Missões", icon: <IconTarget /> },
+    { to: "/missoes/nova", label: "Nova missão", icon: <IconPlus /> }
   ];
   if (user?.heroiId) {
     items.push({

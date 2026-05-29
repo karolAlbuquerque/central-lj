@@ -1,0 +1,81 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.error {
+  color: var(--status-error, #ff6b6b);
+  font-size: 14px;
+}
+
+.targetList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.targetCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 60, 60, 0.06);
+  border: 1px solid rgba(255, 60, 60, 0.15);
+  clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+}
+
+.targetInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.targetTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.targetState {
+  font-size: 12px;
+  color: rgba(255, 120, 120, 0.9);
+  font-style: italic;
+}
+
+.targetDesc {
+  font-size: 13px;
+  color: var(--hud-muted);
+  flex: 1;
+  margin: 0;
+}
+
+.btnInfiltrate {
+  padding: 10px 20px;
+  background: linear-gradient(180deg, rgba(200, 0, 0, 0.7), rgba(120, 0, 0, 0.9));
+  color: #fff;
+  border: none;
+  clip-path: polygon(6px 0%, calc(100% - 6px) 0%, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0% calc(100% - 6px), 0% 6px);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: filter 0.2s;
+}
+
+.btnInfiltrate:hover:not(:disabled) {
+  filter: brightness(1.2);
+}
+
+.btnInfiltrate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

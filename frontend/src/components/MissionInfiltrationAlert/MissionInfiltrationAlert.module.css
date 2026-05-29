@@ -1,0 +1,195 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.35s ease-out;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(180, 20, 40, 0.45), rgba(0, 0, 0, 0.92));
+  animation: pulseBackdrop 2s ease-in-out infinite;
+}
+
+.panel {
+  position: relative;
+  max-width: 520px;
+  width: 100%;
+  padding: 36px 32px 28px;
+  text-align: center;
+  clip-path: polygon(
+    16px 0%,
+    calc(100% - 16px) 0%,
+    100% 16px,
+    100% calc(100% - 16px),
+    calc(100% - 16px) 100%,
+    16px 100%,
+    0% calc(100% - 16px),
+    0% 16px
+  );
+  background: linear-gradient(160deg, rgba(40, 8, 16, 0.98), rgba(12, 8, 20, 0.98));
+  border: 2px solid rgba(255, 60, 80, 0.55);
+  box-shadow:
+    0 0 60px rgba(255, 40, 60, 0.35),
+    inset 0 0 40px rgba(255, 0, 0, 0.08);
+  animation: slamIn 0.55s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+.streaks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.streak {
+  position: absolute;
+  top: -20%;
+  width: 4px;
+  height: 140%;
+  background: linear-gradient(180deg, transparent, #ff3d5c, transparent);
+  animation: streakFly 1.2s ease-out infinite;
+}
+
+.streak:nth-child(1) {
+  left: 18%;
+  animation-delay: 0s;
+}
+
+.streak:nth-child(2) {
+  left: 50%;
+  animation-delay: 0.25s;
+}
+
+.streak:nth-child(3) {
+  left: 78%;
+  animation-delay: 0.5s;
+}
+
+.kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ff6b7a;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: #fff;
+  text-shadow:
+    0 0 20px rgba(255, 50, 70, 0.9),
+    0 0 40px rgba(255, 0, 40, 0.4);
+  animation: titleShake 0.6s ease-out 0.2s both;
+}
+
+.lead {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: rgba(255, 220, 220, 0.88);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btnPrimary {
+  display: block;
+  padding: 14px 20px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(180deg, #ff4d6d, #c9184a);
+  clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+}
+
+.btnGhost {
+  padding: 10px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slamIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7) translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pulseBackdrop {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes streakFly {
+  0% {
+    transform: translateY(-100%) rotate(12deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+@keyframes titleShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}

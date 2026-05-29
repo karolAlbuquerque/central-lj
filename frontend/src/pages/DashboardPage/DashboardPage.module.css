@@ -460,3 +460,79 @@
   color: var(--hud-muted);
   margin: 0 0 12px;
 }
+
+.recentList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recentList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alertDotNeutral {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(0, 209, 255, 0.25);
+}
+
+.missionMeta {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.metaDanger {
+  color: #ff6b6b;
+  text-shadow: 0 0 10px rgba(255, 77, 77, 0.45);
+}
+
+.metaWarn {
+  color: var(--accent-warn);
+}
+
+.crewGrid {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.crewItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crewValue {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 750;
+  font-style: italic;
+  line-height: 1;
+  color: var(--text);
+  text-shadow: 0 0 20px rgba(0, 209, 255, 0.2);
+}
+
+.crewValueActive {
+  color: #4dffa0;
+  text-shadow: 0 0 20px rgba(77, 255, 160, 0.4);
+}
+
+.crewLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+}

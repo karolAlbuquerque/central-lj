@@ -1,0 +1,1382 @@
+/* ── Shared game shell ───────────────────────────────────── */
+.box {
+  margin-top: 4px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--hud-muted, #9ca8b8);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.title {
+  margin: 0 0 12px;
+  font-family: var(--font-display, system-ui);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #00d1ff;
+  text-shadow: 0 0 12px rgba(0, 209, 255, 0.45);
+}
+
+.gamePanel {
+  position: relative;
+  padding: 20px 18px 16px;
+  background:
+    linear-gradient(165deg, rgba(0, 209, 255, 0.06) 0%, rgba(8, 14, 24, 0.92) 45%, rgba(4, 8, 16, 0.98) 100%);
+  clip-path: var(--hud-clip-14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(0, 209, 255, 0.08);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 11px 22px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-display, system-ui);
+  font-weight: 700;
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  clip-path: var(--hud-clip-8);
+  background: linear-gradient(165deg, rgba(46, 229, 157, 0.35) 0%, rgba(0, 140, 90, 0.55) 100%);
+  box-shadow:
+    0 0 0 1px rgba(46, 229, 157, 0.5),
+    0 0 20px rgba(46, 229, 157, 0.2);
+  transition: filter 0.15s, transform 0.12s;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  padding: 8px 14px;
+  border: 1px solid rgba(0, 209, 255, 0.35);
+  background: rgba(0, 209, 255, 0.08);
+  color: #e8f4ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  clip-path: var(--hud-clip-6);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: rgba(0, 209, 255, 0.16);
+  border-color: rgba(0, 209, 255, 0.55);
+}
+
+/* ── Sequence memory (terminal) ─────────────────────────── */
+.terminalReveal {
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  text-align: center;
+  clip-path: var(--hud-clip-10);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  box-shadow:
+    inset 0 0 30px rgba(250, 204, 21, 0.08),
+    0 0 20px rgba(250, 204, 21, 0.15);
+  animation: pulseGlow 1.2s ease-in-out infinite;
+}
+
+.terminalDigits {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-family: "Courier New", monospace;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fef08a;
+  text-shadow: 0 0 16px rgba(250, 204, 21, 0.6);
+  letter-spacing: 0.15em;
+}
+
+.slotRow {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.codeSlot {
+  width: 48px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Courier New", monospace;
+  font-size: 22px;
+  font-weight: 800;
+  color: #00d1ff;
+  clip-path: var(--hud-clip-6);
+  background: rgba(0, 20, 40, 0.8);
+  border: 1px solid rgba(0, 209, 255, 0.35);
+  box-shadow: inset 0 0 12px rgba(0, 209, 255, 0.12);
+}
+
+.codeSlot.filled {
+  border-color: rgba(46, 229, 157, 0.6);
+  color: #86efac;
+  box-shadow:
+    inset 0 0 16px rgba(46, 229, 157, 0.2),
+    0 0 12px rgba(46, 229, 157, 0.25);
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 280px;
+  margin: 0 auto 14px;
+}
+
+.keypadBtn {
+  aspect-ratio: 1;
+  border: 1px solid rgba(0, 209, 255, 0.4);
+  background: linear-gradient(180deg, rgba(0, 50, 80, 0.9), rgba(0, 25, 45, 0.95));
+  color: #fff;
+  font-family: var(--font-display, system-ui);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  clip-path: var(--hud-clip-6);
+  transition: transform 0.1s, box-shadow 0.15s, background 0.15s;
+}
+
+.keypadBtn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 0 14px rgba(0, 209, 255, 0.35);
+  background: linear-gradient(180deg, rgba(0, 80, 130, 0.95), rgba(0, 40, 70, 1));
+}
+
+.keypadBtn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* ── Wire bomb (drag connect) ─────────────────────────────── */
+.wireArena {
+  position: relative;
+  min-height: 280px;
+  padding: 8px 4px;
+  user-select: none;
+}
+
+.wireSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.wireLine {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px currentColor);
+  opacity: 0.85;
+}
+
+.wireLinePreview {
+  stroke: rgba(250, 204, 21, 0.9);
+  stroke-width: 3;
+  stroke-dasharray: 8 6;
+  animation: dashMove 0.6s linear infinite;
+}
+
+.wireLayout {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: stretch;
+  min-height: 260px;
+}
+
+.wireCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.bombCore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  clip-path: var(--hud-clip-10);
+  background: radial-gradient(circle at 50% 40%, rgba(248, 113, 113, 0.25), rgba(20, 8, 12, 0.9) 70%);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  box-shadow:
+    inset 0 0 40px rgba(248, 113, 113, 0.15),
+    0 0 24px rgba(248, 113, 113, 0.2);
+  animation: bombPulse 2s ease-in-out infinite;
+}
+
+.bombExploding {
+  border-color: rgba(248, 113, 113, 0.9);
+  animation: bombShake 0.12s linear 7, bombFlash 0.22s ease 4;
+}
+
+.bombIcon {
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.6));
+}
+
+.bombLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fca5a5;
+}
+
+.explosionFx {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, system-ui);
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: 0.08em;
+  color: #fee2e2;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.8),
+    0 0 18px rgba(248, 113, 113, 0.8),
+    0 0 38px rgba(248, 113, 113, 0.6);
+  animation: boomPop 0.45s ease forwards;
+  pointer-events: none;
+}
+
+.wireNode {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  width: 100%;
+  clip-path: var(--hud-clip-8);
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  cursor: grab;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s,
+    opacity 0.2s;
+}
+
+.wireNode:active {
+  cursor: grabbing;
+}
+
+.wireNode:hover:not(.wireConnected) {
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
+}
+
+.wireNode.wireDragging {
+  border-color: #facc15;
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.45);
+  transform: scale(1.02);
+  z-index: 5;
+}
+
+.wireNode.wireConnected {
+  opacity: 0.65;
+  cursor: default;
+  border-color: rgba(46, 229, 157, 0.45);
+}
+
+.wireNode.portNode {
+  cursor: pointer;
+}
+
+.wireNode.portNode.portDropTarget {
+  border-color: #facc15;
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.35);
+  transform: scale(1.03);
+}
+
+.wireCable {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  opacity: 0.9;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.wireLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 52px;
+  text-align: left;
+}
+
+.portLabel {
+  text-align: right;
+  min-width: 52px;
+}
+
+.wireSocket {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.35), rgba(30, 30, 30, 0.9) 60%);
+  flex-shrink: 0;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.wireSocketFilled {
+  border-width: 2px;
+  box-shadow:
+    0 0 10px currentColor,
+    inset 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* ── Drag sort rack ─────────────────────────────────────── */
+.sortRack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.sortTrack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 20px;
+  min-height: 88px;
+  width: 100%;
+  clip-path: var(--hud-clip-12);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px dashed rgba(0, 209, 255, 0.25);
+}
+
+.sortChip {
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, system-ui);
+  font-size: 22px;
+  font-weight: 800;
+  font-style: italic;
+  color: #fff;
+  cursor: grab;
+  clip-path: var(--hud-clip-8);
+  background: linear-gradient(145deg, rgba(0, 209, 255, 0.35), rgba(0, 60, 120, 0.85));
+  border: 2px solid rgba(0, 209, 255, 0.45);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 0 16px rgba(0, 209, 255, 0.2);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.sortChip:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.4),
+    0 0 22px rgba(0, 209, 255, 0.35);
+}
+
+.sortChip.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.sortChip.dragOver {
+  border-color: #facc15;
+  transform: scale(1.08);
+}
+
+.sortChip.correctGlow {
+  border-color: rgba(46, 229, 157, 0.8);
+  box-shadow: 0 0 18px rgba(46, 229, 157, 0.35);
+}
+
+.sortHint {
+  font-size: 11px;
+  color: var(--hud-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Card memory ─────────────────────────────────────────── */
+.cardArena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 16px 16px;
+  clip-path: var(--hud-clip-10);
+  background: linear-gradient(180deg, rgba(0, 209, 255, 0.06), rgba(0, 0, 0, 0.26));
+  border: 1px solid rgba(0, 209, 255, 0.22);
+  overflow-x: auto;
+}
+
+.cardArenaMiss {
+  animation: cardMissShake 0.36s ease;
+  border-color: rgba(248, 113, 113, 0.45);
+  box-shadow: 0 0 20px rgba(248, 113, 113, 0.2);
+}
+
+.cardHud {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardHudItem {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #cbe6ff;
+}
+
+.cardHudMiss {
+  color: #fca5a5;
+}
+
+.cardGridBoard {
+  position: relative;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.memoryCardAbs {
+  position: absolute;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    left 0.55s cubic-bezier(0.34, 1.15, 0.5, 1),
+    top 0.55s cubic-bezier(0.34, 1.15, 0.5, 1),
+    filter 0.2s ease;
+  z-index: 1;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45));
+}
+
+.memoryCardLift {
+  display: block;
+  width: 100%;
+  height: 100%;
+  perspective: 1200px;
+  transition: transform 0.2s ease;
+}
+
+.memoryCardAbs:hover:not(:disabled) .memoryCardLift {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.memoryCardAbs:hover:not(:disabled) {
+  z-index: 2;
+}
+
+.memoryCardAbs:disabled {
+  cursor: default;
+}
+
+.memoryCardSelected {
+  filter: drop-shadow(0 0 12px rgba(0, 209, 255, 0.45));
+}
+
+.shuffleOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display, system-ui);
+  font-size: 18px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e0f2fe;
+  text-shadow: 0 0 20px rgba(0, 209, 255, 0.6);
+  background: rgba(2, 8, 18, 0.55);
+  backdrop-filter: blur(2px);
+  pointer-events: none;
+  animation: shuffleOverlayPulse 0.8s ease-in-out infinite;
+}
+
+.cardPeekRow {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: center;
+}
+
+.peekBtn {
+  padding: 10px 18px;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a;
+  font-family: var(--font-display, system-ui);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: var(--hud-clip-8);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.peekBtn:hover:not(:disabled) {
+  background: rgba(250, 204, 21, 0.2);
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.25);
+}
+
+.peekBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.peekBtnArmed {
+  border-color: rgba(250, 204, 21, 0.85);
+  background: rgba(250, 204, 21, 0.28);
+  box-shadow: 0 0 22px rgba(250, 204, 21, 0.35);
+  animation: peekBtnPulse 0.9s ease-in-out infinite;
+}
+
+.cardArenaPeekArmed {
+  border-color: rgba(250, 204, 21, 0.4);
+  box-shadow: 0 0 24px rgba(250, 204, 21, 0.15);
+}
+
+.cardArenaPeeking {
+  border-color: rgba(250, 204, 21, 0.55);
+  box-shadow: 0 0 28px rgba(250, 204, 21, 0.22);
+}
+
+.flipCardInner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.flipCardInnerFlipped {
+  transform: rotateY(180deg);
+}
+
+.flipFace {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.flipFront {
+  transform: rotateY(0deg);
+  background: #f8fafc;
+}
+
+.flipBack {
+  transform: rotateY(180deg);
+  background: #fffef8;
+}
+
+/* Costas de baralho */
+.playingCardBack {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  background: linear-gradient(145deg, #ffffff, #e8ecf2);
+}
+
+.playingCardBackEdge {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.playingCardBackField {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #1e3a8a;
+}
+
+.playingCardBackSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Frentes — naipes com cor de baralho */
+.cardFace0 {
+  background: linear-gradient(180deg, #fffef8 0%, #f8f4ea 100%);
+  color: #1e3a8a;
+}
+
+.cardFace1 {
+  background: linear-gradient(180deg, #fffef8 0%, #f8f4ea 100%);
+  color: #b91c1c;
+}
+
+.cardFace2 {
+  background: linear-gradient(180deg, #fffef8 0%, #f8f4ea 100%);
+  color: #15803d;
+}
+
+.cardFace3 {
+  background: linear-gradient(180deg, #fffef8 0%, #f8f4ea 100%);
+  color: #6b21a8;
+}
+
+.cardCornerTL,
+.cardCornerBR {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  color: inherit;
+}
+
+.cardCornerTL {
+  top: 6px;
+  left: 7px;
+}
+
+.cardCornerBR {
+  bottom: 6px;
+  right: 7px;
+  transform: rotate(180deg);
+}
+
+.cardCornerSymbol {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.cardCornerRank {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+
+.cardSymbolWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cardSymbol {
+  font-size: 42px;
+  line-height: 1;
+  color: inherit;
+  filter: none;
+}
+
+.memoryCardAbs.matched {
+  filter: drop-shadow(0 0 12px rgba(46, 229, 157, 0.45));
+}
+
+.memoryCardAbs.matchPulse .flipBack {
+  animation: cardMatchGlow 0.45s ease;
+}
+
+.memoryCardAbs.missPulse .flipBack {
+  animation: cardMissGlow 0.45s ease;
+}
+
+.memoryCardPeeking {
+  filter: drop-shadow(0 0 16px rgba(250, 204, 21, 0.55));
+}
+
+.memoryCardPeeking .memoryCardLift {
+  transform: translateY(-4px);
+}
+
+.memoryCardPeekTarget {
+  animation: peekTargetPulse 0.85s ease-in-out infinite;
+}
+
+.cardPhaseBanner {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-muted);
+  min-height: 1.2em;
+}
+
+.cardPhaseBannerActive {
+  color: #7dd3fc;
+  animation: pulseGlow 1.2s ease-in-out infinite;
+}
+
+.cardArenaShuffle {
+  border-color: rgba(0, 209, 255, 0.45);
+  box-shadow: 0 0 24px rgba(0, 209, 255, 0.15);
+}
+
+.cardGridShuffling .memoryCardAbs {
+  pointer-events: none;
+}
+
+.progressPills {
+  display: flex;
+  gap: 8px;
+}
+
+.progressPill {
+  width: 36px;
+  height: 8px;
+  clip-path: var(--hud-clip-6);
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+.progressPill.done {
+  background: rgba(46, 229, 157, 0.7);
+  box-shadow: 0 0 10px rgba(46, 229, 157, 0.4);
+}
+
+/* ── Modal overlay ───────────────────────────────────────── */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 14, 0.82);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  z-index: 99999;
+  animation: fadeIn 220ms ease;
+  padding: 16px;
+}
+
+.modalCard {
+  position: relative;
+  width: min(920px, 96vw);
+  max-height: 92vh;
+  overflow: hidden;
+  clip-path: var(--hud-clip-16);
+  background: linear-gradient(180deg, rgba(12, 20, 34, 0.98) 0%, rgba(6, 10, 18, 0.99) 100%);
+  border: 1px solid rgba(0, 209, 255, 0.4);
+  box-shadow:
+    0 40px 80px rgba(0, 0, 0, 0.55),
+    0 0 40px rgba(0, 209, 255, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: modalIn 280ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.modalCardCards {
+  width: min(1120px, 98vw);
+  max-height: 96vh;
+}
+
+.modalCardFatalBorder {
+  border-color: rgba(248, 113, 113, 0.75);
+  box-shadow:
+    0 40px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(248, 113, 113, 0.28),
+    inset 0 0 36px rgba(248, 113, 113, 0.2);
+}
+
+/* Camada interna: shake fatal não conflita com modalIn no card externo */
+.modalShakeLayer {
+  position: relative;
+  max-height: 92vh;
+  overflow: auto;
+  transform: translateZ(0);
+}
+
+.modalShakeLayerFatal {
+  animation: modalFatalShake 0.42s ease-in-out infinite;
+}
+
+.modalDangerFlash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgba(248, 113, 113, 0.38) 0%,
+    rgba(248, 113, 113, 0.08) 42%,
+    transparent 72%
+  );
+}
+
+.modalDangerFlashHint {
+  animation: modalFlashHint 0.52s ease forwards;
+}
+
+.modalDangerFlashFatal {
+  animation: modalFlashFatal 3s ease forwards;
+  background: radial-gradient(
+    circle at center,
+    rgba(248, 113, 113, 0.5) 0%,
+    rgba(127, 29, 29, 0.25) 45%,
+    transparent 75%
+  );
+}
+
+.modalDangerFlashText {
+  display: block;
+  font-family: var(--font-display, system-ui);
+  font-size: clamp(26px, 5vw, 54px);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #fee2e2;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 20px rgba(248, 113, 113, 0.95),
+    0 0 50px rgba(248, 113, 113, 0.7);
+}
+
+.modalDangerFlashHint .modalDangerFlashText {
+  animation: modalFlashTextPop 0.52s ease forwards;
+}
+
+.modalDangerFlashFatal .modalDangerFlashText {
+  animation: modalFlashTextFatal 3s ease forwards;
+}
+
+.modalGameOver {
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
+  margin: 0 16px 12px;
+  padding: 14px 16px;
+  clip-path: var(--hud-clip-10);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  box-shadow: 0 0 20px rgba(248, 113, 113, 0.15);
+}
+
+.modalGameOverTitle {
+  margin: 0 0 6px;
+  font-family: var(--font-display, system-ui);
+  font-size: 13px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fecaca;
+}
+
+.modalGameOverText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #fee2e2;
+}
+
+.modalPhaserBg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  clip-path: inherit;
+}
+
+.modalHeader,
+.modalBody {
+  position: relative;
+  z-index: 1;
+}
+
+.modalHeader {
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(0, 209, 255, 0.15);
+  background: linear-gradient(180deg, rgba(0, 209, 255, 0.06), transparent);
+}
+
+.modalTitle {
+  margin: 0 0 4px;
+  font-family: var(--font-display, system-ui);
+  font-size: 20px;
+  font-style: italic;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(0, 209, 255, 0.35);
+}
+
+.modalSubtitle {
+  margin: 0 0 14px;
+  color: var(--hud-muted);
+  font-size: 13px;
+}
+
+.modalStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 20px;
+}
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
+
+.statLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-muted);
+}
+
+.statBar {
+  height: 8px;
+  clip-path: var(--hud-clip-6);
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.statBarFill {
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.statBarFill.time {
+  background: linear-gradient(90deg, #00d1ff, #38bdf8);
+  box-shadow: 0 0 10px rgba(0, 209, 255, 0.5);
+}
+
+.statBarFill.errors {
+  background: linear-gradient(90deg, #facc15, #f87171);
+}
+
+.statValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.modalBody {
+  padding: 16px 20px 20px;
+}
+
+.modalClose {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 3;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  clip-path: var(--hud-clip-6);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.modalClose:hover {
+  background: rgba(248, 113, 113, 0.25);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fecaca;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalFatalShake {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  12% { transform: translate3d(-5px, 1px, 0) rotate(-0.35deg); }
+  28% { transform: translate3d(6px, -1px, 0) rotate(0.4deg); }
+  44% { transform: translate3d(-4px, 0, 0) rotate(-0.3deg); }
+  60% { transform: translate3d(5px, 1px, 0) rotate(0.35deg); }
+  76% { transform: translate3d(-3px, 0, 0) rotate(-0.2deg); }
+}
+
+@keyframes modalFlashHint {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  72% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+@keyframes modalFlashFatal {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  88% { opacity: 0.92; }
+  100% { opacity: 0.5; }
+}
+
+@keyframes modalFlashTextPop {
+  0% { opacity: 0; transform: scale(0.88); }
+  22% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+
+@keyframes modalFlashTextFatal {
+  0% { opacity: 0; transform: scale(0.75); }
+  10% { opacity: 1; transform: scale(1.08); }
+  20% { transform: scale(1); }
+  85% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0.9; transform: scale(1.05); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: inset 0 0 30px rgba(250, 204, 21, 0.08), 0 0 20px rgba(250, 204, 21, 0.12); }
+  50% { box-shadow: inset 0 0 40px rgba(250, 204, 21, 0.14), 0 0 28px rgba(250, 204, 21, 0.22); }
+}
+
+@keyframes bombPulse {
+  0%, 100% { transform: scale(1); box-shadow: inset 0 0 40px rgba(248, 113, 113, 0.12), 0 0 20px rgba(248, 113, 113, 0.15); }
+  50% { transform: scale(1.03); box-shadow: inset 0 0 50px rgba(248, 113, 113, 0.2), 0 0 28px rgba(248, 113, 113, 0.28); }
+}
+
+@keyframes bombShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+
+@keyframes bombFlash {
+  0%, 100% { box-shadow: inset 0 0 40px rgba(248, 113, 113, 0.12), 0 0 20px rgba(248, 113, 113, 0.15); }
+  50% { box-shadow: inset 0 0 60px rgba(254, 226, 226, 0.35), 0 0 40px rgba(248, 113, 113, 0.55); }
+}
+
+@keyframes boomPop {
+  0% { opacity: 0; transform: scale(0.55); }
+  30% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+
+@keyframes dashMove {
+  to { stroke-dashoffset: -28; }
+}
+
+@keyframes cardMissShake {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+}
+
+@keyframes cardMatchGlow {
+  0% { box-shadow: inset 0 0 24px rgba(0, 209, 255, 0.2), 0 0 16px rgba(0, 209, 255, 0.25); }
+  60% { box-shadow: inset 0 0 30px rgba(46, 229, 157, 0.25), 0 0 28px rgba(46, 229, 157, 0.4); }
+  100% { box-shadow: inset 0 0 24px rgba(0, 209, 255, 0.2), 0 0 16px rgba(0, 209, 255, 0.25); }
+}
+
+@keyframes cardMissGlow {
+  0% { box-shadow: inset 0 0 24px rgba(0, 209, 255, 0.2), 0 0 16px rgba(0, 209, 255, 0.25); }
+  60% { box-shadow: inset 0 0 34px rgba(248, 113, 113, 0.28), 0 0 26px rgba(248, 113, 113, 0.45); }
+  100% { box-shadow: inset 0 0 24px rgba(0, 209, 255, 0.2), 0 0 16px rgba(0, 209, 255, 0.25); }
+}
+
+@keyframes cardSlotShuffle {
+  0%, 100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: translateY(-8px) scale(0.94) rotate(2deg); opacity: 0.8; }
+}
+
+@keyframes shuffleOverlayPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+@keyframes peekBtnPulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(250, 204, 21, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(250, 204, 21, 0.45); }
+}
+
+@keyframes peekTargetPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.25)); }
+  50% { filter: drop-shadow(0 0 16px rgba(250, 204, 21, 0.55)); }
+}
+
+/* ── New puzzles: rotate/simon/terminal/sliding/arcade ───── */
+.rotateLegend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--hud-muted);
+}
+
+.rotateLegend code {
+  padding: 4px 8px;
+  border: 1px solid rgba(0, 209, 255, 0.35);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+}
+
+.rotateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 68px);
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rotateTile {
+  width: 68px;
+  height: 68px;
+  border: 1px solid rgba(0, 209, 255, 0.35);
+  background: rgba(0, 36, 60, 0.72);
+  color: #d9f4ff;
+  clip-path: var(--hud-clip-6);
+  cursor: pointer;
+}
+
+.rotateArrow {
+  display: inline-block;
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+
+.rotateOk {
+  border-color: rgba(46, 229, 157, 0.8);
+  box-shadow: 0 0 12px rgba(46, 229, 157, 0.3);
+}
+
+.simonStatus {
+  text-align: center;
+  font-size: 12px;
+  color: var(--hud-muted);
+  margin-bottom: 10px;
+}
+
+.simonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 94px);
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.simonPad {
+  width: 94px;
+  height: 74px;
+  border: none;
+  clip-path: var(--hud-clip-8);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.12s ease;
+}
+
+.simonPadLit {
+  opacity: 1;
+  filter: brightness(1.3);
+  transform: scale(1.04);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
+}
+
+.terminalTokenPanel {
+  border: 1px solid rgba(0, 209, 255, 0.35);
+  background: rgba(1, 8, 18, 0.72);
+  clip-path: var(--hud-clip-8);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.terminalTokenLine {
+  display: flex;
+  justify-content: space-between;
+  font-family: "Courier New", monospace;
+  font-size: 13px;
+  color: #86efac;
+  margin-bottom: 6px;
+}
+
+.terminalTokenLine:last-child {
+  margin-bottom: 0;
+}
+
+.terminalInputRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.terminalInput {
+  width: 100%;
+  padding: 10px 8px;
+  border: 1px solid rgba(0, 209, 255, 0.4);
+  background: rgba(2, 20, 36, 0.9);
+  color: #fff;
+  font-family: "Courier New", monospace;
+  text-align: center;
+  clip-path: var(--hud-clip-6);
+}
+
+.slidingWrap {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 14px;
+  justify-content: center;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+.slidingBoard,
+.slidingTarget {
+  display: grid;
+  grid-template-columns: repeat(3, 54px);
+  gap: 6px;
+}
+
+.slidingCell,
+.slidingTargetCell {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(0, 209, 255, 0.4);
+  background: rgba(0, 35, 58, 0.78);
+  color: #fff;
+  font-family: var(--font-display, system-ui);
+  font-weight: 700;
+  clip-path: var(--hud-clip-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slidingCell {
+  cursor: pointer;
+}
+
+.slidingEmpty {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.arcadeTrack,
+.dodgeTimeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.arcadeStep,
+.dodgeStep {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(0, 209, 255, 0.3);
+  background: rgba(0, 30, 52, 0.8);
+  color: #d7f3ff;
+  clip-path: var(--hud-clip-6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.arcadePad,
+.dodgeLanes {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.arcadeBtn {
+  min-width: 72px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 209, 255, 0.4);
+  color: #e8f7ff;
+  background: linear-gradient(180deg, rgba(0, 58, 98, 0.9), rgba(0, 22, 42, 0.95));
+  clip-path: var(--hud-clip-6);
+  cursor: pointer;
+}
+
+.arcadeOk {
+  border-color: rgba(46, 229, 157, 0.8);
+  background: rgba(46, 229, 157, 0.25);
+}
+
+.arcadeMiss {
+  border-color: rgba(248, 113, 113, 0.8);
+  background: rgba(248, 113, 113, 0.3);
+}

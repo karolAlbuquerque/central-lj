@@ -14,7 +14,14 @@ export function RequireAuth() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    const next = encodeURIComponent(location.pathname + location.search);
+    return (
+      <Navigate
+        to={`/login?reason=session_expired&next=${next}`}
+        replace
+        state={{ from: location.pathname }}
+      />
+    );
   }
 
   return <Outlet />;

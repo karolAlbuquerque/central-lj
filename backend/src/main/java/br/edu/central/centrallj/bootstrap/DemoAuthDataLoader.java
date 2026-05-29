@@ -38,6 +38,9 @@ public class DemoAuthDataLoader implements ApplicationRunner {
 
   public static final UUID DEMO_ADMIN_USER_ID = UUID.fromString("33333333-3333-3333-3333-333333333301");
   public static final UUID DEMO_HERO_USER_ID = UUID.fromString("33333333-3333-3333-3333-333333333302");
+  public static final UUID DEMO_HEROI_B_ID = UUID.fromString("22222222-2222-2222-2222-222222222203");
+  public static final UUID DEMO_HERO_B_USER_ID = UUID.fromString("33333333-3333-3333-3333-333333333303");
+  public static final UUID DEMO_VILLAIN_USER_ID = UUID.fromString("33333333-3333-3333-3333-333333333304");
 
   private final UsuarioPersistencePort usuarioPersistencePort;
   private final EquipePersistencePort equipePersistencePort;
@@ -108,5 +111,42 @@ public class DemoAuthDataLoader implements ApplicationRunner {
     heroUser.setCreatedAt(now);
     heroUser.setUpdatedAt(now);
     usuarioPersistencePort.save(heroUser);
+
+    Heroi heroB = new Heroi();
+    heroB.setId(DEMO_HEROI_B_ID);
+    heroB.setNomeHeroico("Sentinela Beta");
+    heroB.setNomeCivil("Agente B");
+    heroB.setEspecialidade("Inteligência");
+    heroB.setStatusDisponibilidade(HeroiDisponibilidade.DISPONIVEL);
+    heroB.setNivel("B");
+    heroB.setAtivo(true);
+    heroB.setEquipe(eq);
+    heroB.setCreatedAt(now);
+    heroB.setUpdatedAt(now);
+    heroiPersistencePort.save(heroB);
+
+    Usuario heroBUser = new Usuario();
+    heroBUser.setId(DEMO_HERO_B_USER_ID);
+    heroBUser.setNome("Sentinela Beta (conta)");
+    heroBUser.setEmail("heroi.b@central-lj.demo");
+    heroBUser.setSenhaHash(passwordEncoder.encode("HeroB@demo2026"));
+    heroBUser.setRole(UserRole.HERO);
+    heroBUser.setAtivo(true);
+    heroBUser.setHeroi(heroB);
+    heroBUser.setCreatedAt(now);
+    heroBUser.setUpdatedAt(now);
+    usuarioPersistencePort.save(heroBUser);
+
+    Usuario villain = new Usuario();
+    villain.setId(DEMO_VILLAIN_USER_ID);
+    villain.setNome("Vilão Demo");
+    villain.setEmail("vilao.demo@central-lj.demo");
+    villain.setSenhaHash(passwordEncoder.encode("Villain@demo2026"));
+    villain.setRole(UserRole.VILLAIN);
+    villain.setAtivo(true);
+    villain.setHeroi(null);
+    villain.setCreatedAt(now);
+    villain.setUpdatedAt(now);
+    usuarioPersistencePort.save(villain);
   }
 }

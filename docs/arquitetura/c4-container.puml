@@ -3,27 +3,32 @@
 
 title Central-LJ — C4 Nível 2 (Contêineres)
 
-Person(usuario, "Usuário comum", "Consulta ou interação leve com a central (evolução pós-N1).")
-Person(operador, "Operador / Admin", "Registra missões e acompanha operações.")
+Person(admin,   "ADMIN / OPERATOR", "Gerencia missões operacionais, heróis, equipes e dashboard.")
+Person(hero,    "HERO",             "Cria party missions, executa puzzles e defende em duelos PvP.")
+Person(villain, "VILLAIN",          "Infiltra missões heroicas, disputa duelos e aplica sabotagem.")
 
 System_Boundary(central, "Central-LJ") {
-  Container(spa, "SPA / Frontend", "React + TypeScript + Vite", "Interface operacional: registro e acompanhamento de missões. Futuro: timeline e dashboards.")
-  Container(api, "Backend", "Spring Boot (Java)", "Camada REST; services e DTOs; módulo Kafka (produtor/consumidor N1); **WebSocket planejado**; JDBC/JPA **a partir da N2**.")
-  ContainerQueue(kafka, "Kafka", "Apache Kafka", "Eventos de domínio (missão, mudança de estado). Desacopla API de processamento assíncrono.")
-  ContainerDb(pg, "PostgreSQL", "PostgreSQL 16", "Modelo relacional de missões, equipes e histórico (N2+).")
-  Container(ui, "Kafka UI", "Provectus Kafka UI", "Ferramenta **apenas dev**: inspeção de tópicos na N1.")
+  Container(spa, "SPA Frontend", "React 19 · TypeScript · Vite 6 — :5173", "17 páginas; 3 layouts por papel: Villain, Hero, Admin/Operator.\n10 tipos de puzzle interativos.\nVisualizador 3D GLTF via Three.js/model-viewer.\nSSE listener + polling fallback 12s + visibilitychange.\nJWT armazenado em localStorage. CSS Modules.")
+  Container(api, "Backend API", "Spring Boot 3.4 · Java 21 · Maven — :8080", "12 controllers REST com 40+ endpoints.\nArquitetura Hexagonal: 19 Use Cases, 13 Ports de saída, 13 Services.\nSpring Security 6 + JWT HS256 stateless.\nProdutor Kafka: AfterCommitMissionDispatch.\nConsumidor Kafka: MissionCreatedConsumer.\nSSE emitter: SseMissionNotificationAdapter.\nFlyway migrations V1–V17.")
+  ContainerQueue(kafka, "Apache Kafka (KRaft)", "Kafka KRaft · Docker — :9092", "missions.created — pipeline principal de workflow de missão.\nmissions.events — eventos gerais e debug.\nGrupo de consumidores: central-lj-backend.\nAutoStartup condicional (desabilitado no perfil test).")
+  ContainerDb(pg, "PostgreSQL 16", "PostgreSQL 16 · Docker · Flyway — :5433", "11 tabelas (V1–V17):\nmissions, mission_history\nheroes, equipes_heroicas\nusuarios\nplayer_missions, mission_members\nmission_tasks\nduel_sessions, puzzle_attempts\nsabotage_events")
+  Container(kafkaui, "Kafka UI", "Provectus · Docker dev — :8088", "Inspeção visual de tópicos, mensagens e consumer groups.\nApenas ambiente de desenvolvimento.")
 }
 
-Rel(usuario, spa, "Usa (futuro)", "HTTPS")
-Rel(operador, spa, "Usa a central (N1)", "HTTPS")
-Rel(spa, api, "API REST", "HTTP/JSON")
-Rel(api, kafka, "Publica e consome", "protocolo Kafka")
-Rel(kafka, api, "Entrega mensagens", "consumidor Spring Kafka")
+Rel(admin,   spa, "Usa", "HTTPS")
+Rel(hero,    spa, "Usa", "HTTPS")
+Rel(villain, spa, "Usa", "HTTPS")
 
-Rel(api, pg, "ORM/JDBC (futuro)", "N2+")
+Rel(spa, api, "Chama endpoints REST", "HTTP/JSON")
+Rel_Back(spa, api, "Recebe notificações de status", "SSE — text/event-stream")
 
-Rel(operador, ui, "Inspeciona tópicos (dev)", "http://localhost:8088")
-Rel(ui, kafka, "Administração visual", "rede Docker")
+Rel(api, kafka, "Publica MissionCreatedKafkaEvent após commit JPA", "KafkaTemplate")
+Rel(kafka, api, "Entrega missions.created ao workflow de status", "MissionCreatedConsumer")
+
+Rel(api, pg, "Persiste 11 entidades de domínio", "JPA / HikariCP")
+
+Rel(admin, kafkaui, "Inspeciona tópicos em dev", "HTTP :8088")
+Rel(kafkaui, kafka, "Administração visual", "rede Docker interna")
 
 SHOW_LEGEND()
 @enduml
