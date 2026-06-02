@@ -64,6 +64,7 @@ pnpm-debug.log*
 .env.*
 !.env.example
 !frontend/.env.example
+!infra/.env.prod.example
 
 # Coverage
 coverage/
@@ -84,4 +85,3 @@ docs/**/exports/*
 CLAUDE.md
 AGENTS.md
 .cursorrules
-

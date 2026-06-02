@@ -238,6 +238,41 @@ cd frontend && npm install && npm run dev
 
 ---
 
+## 🚢 Produção com Docker Compose
+
+</div>
+
+O deploy de produção publica somente o frontend Nginx. Ele serve a SPA e encaminha `/api` para o backend no mesmo domínio; PostgreSQL, Kafka e backend permanecem na rede interna do Compose.
+
+Para publicação gratuita com serviços gerenciados, consulte
+**[docs/deploy-cloud-free.md](docs/deploy-cloud-free.md)**.
+
+```bash
+cp infra/.env.prod.example infra/.env.prod
+# Edite infra/.env.prod e substitua as senhas de exemplo.
+docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml up -d --build
+```
+
+Abra o endereço configurado em `HTTP_BIND`. Para conferir a API:
+
+```bash
+curl http://localhost/api/health
+docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml ps
+```
+
+Em uma publicação acessível pela internet, coloque um proxy HTTPS na frente da porta HTTP e use `HTTP_BIND=127.0.0.1:8080`. O seed com contas conhecidas fica desabilitado por padrão. Para publicar a versão demonstrativa com o painel de coordenação, defina `CENTRAL_LJ_AUTH_DEMO_SEED=true` antes da primeira subida e não reutilize essa configuração para dados reais.
+
+Para atualizar uma instalação:
+
+```bash
+git pull
+docker compose --env-file infra/.env.prod -f infra/docker-compose.prod.yml up -d --build
+```
+
+<div align="center">
+
+---
+
 ## 🔐 Contas de demonstração
 
 Seed automático na primeira subida (`central-lj.auth.demo-seed=true`):

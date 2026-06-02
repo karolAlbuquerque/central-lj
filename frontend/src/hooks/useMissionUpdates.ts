@@ -1,6 +1,40 @@
 import { useEffect, useRef } from "react";
+import { apiUrl } from "../config/api";
+import { getAuthToken } from "../services/api";
 
 const STREAM_PATH = "/api/missions/stream";
+
+async function consumeMissionUpdates(signal: AbortSignal, onUpdate: () => void) {
+  const token = getAuthToken();
+  if (!token) return;
+
+  const response = await fetch(apiUrl(STREAM_PATH), {
+    headers: {
+      Accept: "text/event-stream",
+      Authorization: `Bearer ${token}`
+    },
+    signal
+  });
+  if (!response.ok || !response.body) return;
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (!signal.aborted) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const events = buffer.split(/\r?\n\r?\n/);
+    buffer = events.pop() ?? "";
+    for (const event of events) {
+      if (event.split(/\r?\n/).some((line) => line === "event:mission-update")) {
+        onUpdate();
+      }
+    }
+  }
+}
 
 /**
  * Atualizações: SSE (mission-update) + polling de segurança + refresh ao voltar à aba.
@@ -12,14 +46,9 @@ export function useMissionUpdates(onRefresh: () => void | Promise<void>, pollMs 
 
   useEffect(() => {
     const run = () => void cb.current();
+    const controller = new AbortController();
 
-    const es = new EventSource(STREAM_PATH);
-    es.addEventListener("mission-update", run);
-    es.addEventListener("connected", () => {});
-
-    es.onerror = () => {
-      es.close();
-    };
+    void consumeMissionUpdates(controller.signal, run).catch(() => {});
 
     const interval = window.setInterval(run, pollMs);
 
@@ -31,7 +60,7 @@ export function useMissionUpdates(onRefresh: () => void | Promise<void>, pollMs 
     run();
 
     return () => {
-      es.close();
+      controller.abort();
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVis);
     };

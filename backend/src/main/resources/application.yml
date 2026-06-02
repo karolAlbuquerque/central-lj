@@ -42,7 +42,7 @@ central-lj:
       secret: ${JWT_SECRET:central-lj-dev-secret-min-32b-long-key!!!}
       expiration-hours: 48
   auth:
-    demo-seed: true
+    demo-seed: ${CENTRAL_LJ_AUTH_DEMO_SEED:true}
   kafka:
     topic: ${CENTRAL_LJ_KAFKA_TOPIC:missions.events}
     topic-created: ${CENTRAL_LJ_KAFKA_TOPIC_CREATED:missions.created}

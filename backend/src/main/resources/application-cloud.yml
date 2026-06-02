@@ -1,0 +1,14 @@
+spring:
+  kafka:
+    properties:
+      "[security.protocol]": ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+      "[sasl.mechanism]": ${KAFKA_SASL_MECHANISM:SCRAM-SHA-256}
+      "[sasl.jaas.config]": ${KAFKA_SASL_JAAS_CONFIG}
+      "[ssl.truststore.type]": ${KAFKA_SSL_TRUSTSTORE_TYPE:PEM}
+      "[ssl.truststore.location]": ${KAFKA_SSL_TRUSTSTORE_LOCATION:/etc/secrets/aiven-ca.pem}
+
+central-lj:
+  cors:
+    allowed-origin-patterns:
+      - ${FRONTEND_URL}
+

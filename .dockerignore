@@ -1,0 +1,10 @@
+.git
+.github
+.vscode
+.codex
+**/node_modules
+**/dist
+**/target
+**/*.log
+docs
+
