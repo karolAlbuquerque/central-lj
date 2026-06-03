@@ -4,6 +4,7 @@ import br.edu.central.centrallj.application.exception.BadRequestException;
 import br.edu.central.centrallj.application.exception.ResourceNotFoundException;
 import br.edu.central.centrallj.application.model.DuelSessionView;
 import br.edu.central.centrallj.application.model.SubmitProgressCommand;
+import br.edu.central.centrallj.application.port.in.GetDuelSessionUseCase;
 import br.edu.central.centrallj.application.port.in.JoinDuelUseCase;
 import br.edu.central.centrallj.application.port.in.ListVillainTargetsUseCase;
 import br.edu.central.centrallj.application.port.in.StartInfiltrationUseCase;
@@ -14,7 +15,9 @@ import br.edu.central.centrallj.application.port.out.DuelSessionPersistencePort;
 import br.edu.central.centrallj.application.port.out.MissionMemberPersistencePort;
 import br.edu.central.centrallj.application.port.out.PlayerMissionPersistencePort;
 import br.edu.central.centrallj.application.port.out.PuzzleAttemptPersistencePort;
+import br.edu.central.centrallj.application.port.out.MissionNotificationPort;
 import br.edu.central.centrallj.application.port.out.UsuarioPersistencePort;
+import br.edu.central.centrallj.domain.Usuario;
 import br.edu.central.centrallj.domain.DuelSession;
 import br.edu.central.centrallj.domain.DuelStatus;
 import br.edu.central.centrallj.domain.MissionCombatState;
@@ -36,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DuelService
     implements StartInfiltrationUseCase,
         JoinDuelUseCase,
+        GetDuelSessionUseCase,
         SubmitInfiltrationProgressUseCase,
         SubmitPuzzleProgressUseCase,
         ListVillainTargetsUseCase {
@@ -43,14 +47,24 @@ public class DuelService
   private static final List<DuelStatus> ACTIVE_STATUSES =
       List.of(DuelStatus.INFILTRATING, DuelStatus.PENDING, DuelStatus.ACTIVE);
   private static final int INFILTRATION_PUZZLES_REQUIRED = 3;
+  private static final int DUEL_PUZZLES_REQUIRED = 3;
   private static final int DUEL_TIMEOUT_MINUTES = 3;
+  private static final int HERO_ACCEPT_DUEL_MINUTES = 120;
   private static final int MAX_INVALID_MOVES = 3;
+  private static final String VILLAIN_SIDE = "vil";
+  private static final String HERO_SIDE = "her";
+  private static final PuzzleType[] DUEL_PUZZLE_TYPES =
+      {PuzzleType.SEQUENCE_INPUT, PuzzleType.DRAG_SORT, PuzzleType.NODE_CONNECT};
+  private static final int[][] DUEL_TYPE_PERMUTATIONS = {
+    {0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}
+  };
 
   private final PlayerMissionPersistencePort missionPort;
   private final MissionMemberPersistencePort memberPort;
   private final DuelSessionPersistencePort duelPort;
   private final PuzzleAttemptPersistencePort attemptPort;
   private final UsuarioPersistencePort usuarioPort;
+  private final MissionNotificationPort missionNotificationPort;
   private final PuzzleValidationService puzzleValidation;
   private final SimpMessagingTemplate messagingTemplate;
   private final ObjectMapper objectMapper;
@@ -61,6 +75,7 @@ public class DuelService
       DuelSessionPersistencePort duelPort,
       PuzzleAttemptPersistencePort attemptPort,
       UsuarioPersistencePort usuarioPort,
+      MissionNotificationPort missionNotificationPort,
       PuzzleValidationService puzzleValidation,
       SimpMessagingTemplate messagingTemplate,
       ObjectMapper objectMapper) {
@@ -69,6 +84,7 @@ public class DuelService
     this.duelPort = duelPort;
     this.attemptPort = attemptPort;
     this.usuarioPort = usuarioPort;
+    this.missionNotificationPort = missionNotificationPort;
     this.puzzleValidation = puzzleValidation;
     this.messagingTemplate = messagingTemplate;
     this.objectMapper = objectMapper;
@@ -104,12 +120,13 @@ public class DuelService
     PlayerMission mission =
         missionPort.findById(missionId)
             .orElseThrow(() -> new ResourceNotFoundException("Missão não encontrada."));
+    assertMissionAllowsInfiltration(mission);
     var existingInfiltrating =
         duelPort.findActiveByMission(missionId, List.of(DuelStatus.INFILTRATING));
     if (existingInfiltrating.isPresent()) {
       DuelSession existing = existingInfiltrating.get();
       if (existing.getAttackerUserId().equals(attackerUserId)) {
-        return toView(existing);
+        return toView(existing, attackerUserId);
       }
       throw new BadRequestException("Outro vilão já está infiltrando esta missão.");
     }
@@ -128,7 +145,7 @@ public class DuelService
             applyInfiltrationPuzzle(
                 pending, baseSeedForSession(pending), pending.getInfiltrationProgress() + 1);
           }
-          return toView(duelPort.save(pending));
+          return toView(duelPort.save(pending), attackerUserId);
         }
         throw new BadRequestException("Esta missão já possui um duelo em andamento.");
       }
@@ -154,13 +171,17 @@ public class DuelService
     applyInfiltrationPuzzle(session, baseSeed, 1);
     session.setStatus(DuelStatus.INFILTRATING);
     session.setRoundCurrent(1);
-    session.setRoundMax(1);
+    session.setRoundMax(DUEL_PUZZLES_REQUIRED);
     session.setAttackerRoundsWon(0);
     session.setDefenderRoundsWon(0);
     session.setTimeoutAt(now.plusSeconds(DUEL_TIMEOUT_MINUTES * 60L * 2L));
 
     DuelSession saved = duelPort.save(session);
-    return toView(saved);
+    mission.setCombatState(MissionCombatState.ALERTA_INFILTRACAO);
+    mission.setUpdatedAt(now);
+    missionPort.save(mission);
+    missionNotificationPort.notifyMissionUpdate(missionId);
+    return toView(saved, attackerUserId);
   }
 
   @Override
@@ -206,27 +227,31 @@ public class DuelService
         duelPort.save(session);
         throw new BadRequestException("Infiltração falhou — muitos erros nos puzzles de brecha.");
       }
-      return toView(session);
+      return toView(session, command.userId());
     }
 
     session.setInfiltrationProgress(puzzleIndex);
     if (puzzleIndex < INFILTRATION_PUZZLES_REQUIRED) {
       applyInfiltrationPuzzle(session, baseSeedForSession(session), puzzleIndex + 1);
       DuelSession saved = duelPort.save(session);
-      return toView(saved);
+      return toView(saved, command.userId());
     }
 
-    return completeInfiltrationAndAlertDefenders(session);
+    return completeInfiltrationAwaitingHero(session, command.userId());
   }
 
-  private DuelSessionView completeInfiltrationAndAlertDefenders(DuelSession session) {
+  /** Após as 3 brechas: duelo fica PENDING até o herói (defensor) aceitar na arena. */
+  private DuelSessionView completeInfiltrationAwaitingHero(DuelSession session, UUID attackerUserId) {
     Instant now = Instant.now();
     String duelSeed = UUID.randomUUID().toString().replace("-", "");
     session.setSeed(duelSeed);
-    session.setPuzzleType(puzzleTypeForSeed(duelSeed));
     session.setStatus(DuelStatus.PENDING);
     session.setRoundCurrent(1);
-    session.setTimeoutAt(now.plusSeconds(DUEL_TIMEOUT_MINUTES * 60L));
+    session.setRoundMax(DUEL_PUZZLES_REQUIRED);
+    session.setAttackerRoundsWon(0);
+    session.setDefenderRoundsWon(0);
+    session.setStartedAt(null);
+    session.setTimeoutAt(now.plusSeconds(HERO_ACCEPT_DUEL_MINUTES * 60L));
 
     DuelSession saved = duelPort.save(session);
 
@@ -237,16 +262,20 @@ public class DuelService
     mission.setCombatState(MissionCombatState.ALERTA_INFILTRACAO);
     mission.setUpdatedAt(now);
     missionPort.save(mission);
+    missionNotificationPort.notifyMissionUpdate(mission.getId());
 
-    DuelSessionView view = toView(saved);
+    DuelSessionView defenderView = toView(saved, session.getDefenderUserId());
     messagingTemplate.convertAndSendToUser(
-        session.getDefenderUserId().toString(), "/queue/duel-invite", view);
+        session.getDefenderUserId().toString(), "/queue/duel-invite", defenderView);
     messagingTemplate.convertAndSend(
         "/topic/mission/" + session.getMissionId(),
         MissionWsMessage.infiltrationAlert(
             session.getMissionId(), session.getId(), session.getAttackerUserId()));
+    messagingTemplate.convertAndSend(
+        "/topic/duel/" + session.getId(),
+        DuelWsMessage.pendingHeroAccept(session.getTimeoutAt()));
 
-    return view;
+    return toView(saved, attackerUserId);
   }
 
   private String baseSeedForSession(DuelSession session) {
@@ -261,16 +290,29 @@ public class DuelService
     session.setPuzzleType(infiltrationPuzzleTypeForSeed(seed));
   }
 
-  /** Puzzles mais estáveis na fase de brecha (3 etapas antes do alerta). */
+  /** Puzzles da fase de brecha — garante tipos distintos por índice de puzzle. */
   private PuzzleType infiltrationPuzzleTypeForSeed(String seed) {
-    String normalized = seed.contains("-inf-") ? seed.substring(0, seed.indexOf("-inf-")) : seed;
-    String hex = normalized.substring(0, Math.min(8, normalized.length()));
+    int infIdx = seed.indexOf("-inf-");
+    String base = infIdx > 0 ? seed.substring(0, infIdx) : seed;
+    int puzzleIndex = 1;
+    if (infIdx > 0) {
+      try { puzzleIndex = Integer.parseInt(seed.substring(infIdx + 5)); } catch (NumberFormatException ignored) {}
+    }
+    String hex = base.substring(0, Math.min(8, base.length()));
     long state = Long.parseLong(hex, 16) & 0xFFFFFFFFL;
     state = (state * 1664525L + 1013904223L) & 0xFFFFFFFFL;
-    PuzzleType[] types = {
-      PuzzleType.SEQUENCE_INPUT, PuzzleType.DRAG_SORT, PuzzleType.NODE_CONNECT
-    };
-    return types[(int) (state % types.length)];
+    int offset = (int) (state % 3);
+    PuzzleType[] types = {PuzzleType.SEQUENCE_INPUT, PuzzleType.DRAG_SORT, PuzzleType.NODE_CONNECT};
+    return types[(offset + puzzleIndex - 1) % 3];
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public DuelSessionView getForUser(UUID duelId, UUID userId) {
+    DuelSession session =
+        duelPort.findById(duelId)
+            .orElseThrow(() -> new ResourceNotFoundException("Duelo não encontrado."));
+    return toView(session, userId);
   }
 
   @Override
@@ -279,30 +321,82 @@ public class DuelService
     DuelSession session =
         duelPort.findById(duelId)
             .orElseThrow(() -> new ResourceNotFoundException("Duelo não encontrado."));
-    if (session.getStatus() != DuelStatus.PENDING) {
-      throw new BadRequestException("Este duelo não está aguardando participação.");
+    if (session.getAttackerUserId().equals(defenderUserId)) {
+      throw new BadRequestException("Apenas o herói defensor pode aceitar o duelo.");
     }
     if (!session.getDefenderUserId().equals(defenderUserId)) {
       throw new BadRequestException("Você não é o defensor deste duelo.");
     }
+    if (session.getStatus() == DuelStatus.ACTIVE) {
+      return toView(session, defenderUserId);
+    }
+    if (session.getStatus() != DuelStatus.PENDING) {
+      throw new BadRequestException("Este duelo não está aguardando aceite do herói.");
+    }
+    if (Instant.now().isAfter(session.getTimeoutAt())) {
+      cancelPendingDuel(session);
+      throw new BadRequestException("O prazo para aceitar o duelo expirou.");
+    }
+    DuelSession saved = activatePendingDuel(session);
+    missionNotificationPort.notifyMissionUpdate(saved.getMissionId());
+    messagingTemplate.convertAndSend(
+        "/topic/duel/" + saved.getId(),
+        DuelWsMessage.started(
+            saved.getSeed(),
+            duelPuzzleTypeForPlayer(saved.getSeed(), VILLAIN_SIDE, 1).name(),
+            DUEL_PUZZLES_REQUIRED,
+            saved.getTimeoutAt()));
+    return toView(saved, defenderUserId);
+  }
 
+  private DuelSession activatePendingDuel(DuelSession session) {
     Instant now = Instant.now();
     session.setStatus(DuelStatus.ACTIVE);
+    session.setRoundMax(DUEL_PUZZLES_REQUIRED);
+    session.setAttackerRoundsWon(0);
+    session.setDefenderRoundsWon(0);
     session.setStartedAt(now);
     session.setTimeoutAt(now.plusSeconds(DUEL_TIMEOUT_MINUTES * 60L));
-
     DuelSession saved = duelPort.save(session);
+    missionPort
+        .findById(session.getMissionId())
+        .ifPresent(
+            mission -> {
+              mission.setCombatState(MissionCombatState.EM_DUELO);
+              mission.setUpdatedAt(now);
+              missionPort.save(mission);
+            });
+    return saved;
+  }
 
-    PlayerMission mission = missionPort.findById(session.getMissionId()).orElseThrow();
-    mission.setCombatState(MissionCombatState.EM_DUELO);
-    mission.setUpdatedAt(now);
-    missionPort.save(mission);
+  private void cancelPendingDuel(DuelSession session) {
+    session.setStatus(DuelStatus.CANCELLED);
+    session.setFinishedAt(Instant.now());
+    duelPort.save(session);
+    missionPort
+        .findById(session.getMissionId())
+        .ifPresent(
+            mission -> {
+              if (mission.getCombatState() == MissionCombatState.ALERTA_INFILTRACAO
+                  || mission.getCombatState() == MissionCombatState.EM_DUELO) {
+                mission.setCombatState(MissionCombatState.NORMAL);
+                mission.setUpdatedAt(Instant.now());
+                missionPort.save(mission);
+                missionNotificationPort.notifyMissionUpdate(mission.getId());
+              }
+            });
+  }
 
-    messagingTemplate.convertAndSend(
-        "/topic/duel/" + duelId,
-        DuelWsMessage.started(saved.getSeed(), saved.getPuzzleType().name(), saved.getRoundMax(), saved.getTimeoutAt()));
-
-    return toView(saved);
+  private void assertMissionAllowsInfiltration(PlayerMission mission) {
+    MissionCombatState state = mission.getCombatState();
+    if (state == MissionCombatState.DERROTADA
+        || state == MissionCombatState.COMPROMETIDA
+        || state == MissionCombatState.SABOTADA) {
+      throw new BadRequestException("Esta missão já foi encerrada.");
+    }
+    if (state == MissionCombatState.LOBBY) {
+      throw new BadRequestException("A missão ainda não foi iniciada pelo herói.");
+    }
   }
 
   @Override
@@ -311,14 +405,37 @@ public class DuelService
     DuelSession session =
         duelPort.findById(command.duelId())
             .orElseThrow(() -> new ResourceNotFoundException("Duelo não encontrado."));
+    if (session.getStatus() == DuelStatus.PENDING) {
+      throw new BadRequestException("O herói ainda não aceitou o duelo. Aguarde o defensor entrar na arena.");
+    }
     if (session.getStatus() != DuelStatus.ACTIVE) {
       throw new BadRequestException("Duelo não está ativo.");
     }
     if (Instant.now().isAfter(session.getTimeoutAt())) {
-      return resolveTimeout(session);
+      return resolveTimeout(session, command.userId());
     }
 
-    boolean isValid = puzzleValidation.validate(session.getSeed(), session.getPuzzleType(), command.moves());
+    boolean isAttacker = session.getAttackerUserId().equals(command.userId());
+    boolean isDefender = session.getDefenderUserId().equals(command.userId());
+    if (!isAttacker && !isDefender) {
+      throw new BadRequestException("Você não participa deste duelo.");
+    }
+
+    int completed = isAttacker ? session.getAttackerRoundsWon() : session.getDefenderRoundsWon();
+    if (completed >= DUEL_PUZZLES_REQUIRED) {
+      throw new BadRequestException("Você já concluiu todos os puzzles deste duelo.");
+    }
+
+    int puzzleIndex = completed + 1;
+    if (command.roundNumber() != puzzleIndex) {
+      throw new BadRequestException("Índice de puzzle inválido para o seu progresso atual.");
+    }
+
+    String side = isAttacker ? VILLAIN_SIDE : HERO_SIDE;
+    String baseSeed = session.getSeed();
+    String puzzleSeed = duelSeedForPlayer(baseSeed, side, puzzleIndex);
+    PuzzleType puzzleType = duelPuzzleTypeForPlayer(baseSeed, side, puzzleIndex);
+    boolean isValid = puzzleValidation.validate(puzzleSeed, puzzleType, command.moves());
 
     PuzzleAttempt attempt = new PuzzleAttempt();
     attempt.setId(UUID.randomUUID());
@@ -332,65 +449,78 @@ public class DuelService
     attemptPort.save(attempt);
 
     if (!isValid) {
-      long invalidCount = attemptPort.countByDuelUserAndRound(command.duelId(), command.userId(), command.roundNumber());
+      long invalidCount =
+          attemptPort.countByDuelUserAndRound(command.duelId(), command.userId(), command.roundNumber());
       if (invalidCount >= MAX_INVALID_MOVES) {
-        return resolveRound(session, command.userId(), false);
+        throw new BadRequestException("Muitas tentativas inválidas neste puzzle.");
       }
       messagingTemplate.convertAndSendToUser(
           command.userId().toString(), "/queue/errors",
           "Movimento inválido. Tentativas restantes: " + (MAX_INVALID_MOVES - invalidCount));
-      return toView(session);
+      return toView(session, command.userId());
     }
 
-    return resolveRound(session, command.userId(), true);
-  }
-
-  private DuelSessionView resolveRound(DuelSession session, UUID winnerId, boolean valid) {
-    boolean attackerWon = valid && winnerId.equals(session.getAttackerUserId());
-    boolean defenderWon = valid && winnerId.equals(session.getDefenderUserId());
-
-    if (attackerWon) session.setAttackerRoundsWon(session.getAttackerRoundsWon() + 1);
-    if (defenderWon) session.setDefenderRoundsWon(session.getDefenderRoundsWon() + 1);
-
-    int winThreshold = (session.getRoundMax() / 2) + 1;
-    boolean duelOver = session.getAttackerRoundsWon() >= winThreshold
-        || session.getDefenderRoundsWon() >= winThreshold;
-
-    if (duelOver) {
-      boolean attackerFinalWin = session.getAttackerRoundsWon() >= winThreshold;
-      session.setStatus(attackerFinalWin ? DuelStatus.VILLAIN_WON : DuelStatus.HERO_WON);
-      session.setFinishedAt(Instant.now());
-      DuelSession saved = duelPort.save(session);
-      resolveMissionAfterDuel(saved, attackerFinalWin);
-      messagingTemplate.convertAndSend(
-          "/topic/duel/" + session.getId(),
-          DuelWsMessage.ended(attackerFinalWin ? session.getAttackerUserId() : session.getDefenderUserId()));
-      return toView(saved);
+    if (isAttacker) {
+      session.setAttackerRoundsWon(session.getAttackerRoundsWon() + 1);
+    } else {
+      session.setDefenderRoundsWon(session.getDefenderRoundsWon() + 1);
     }
 
-    session.setRoundCurrent(session.getRoundCurrent() + 1);
+    if (session.getAttackerRoundsWon() >= DUEL_PUZZLES_REQUIRED) {
+      return finishDuel(session, true, command.userId());
+    }
+    if (session.getDefenderRoundsWon() >= DUEL_PUZZLES_REQUIRED) {
+      return finishDuel(session, false, command.userId());
+    }
+
     DuelSession saved = duelPort.save(session);
     messagingTemplate.convertAndSend(
         "/topic/duel/" + session.getId(),
-        DuelWsMessage.roundEnd(session.getRoundCurrent() - 1, winnerId));
-    return toView(saved);
+        DuelWsMessage.scoreUpdate(saved.getAttackerRoundsWon(), saved.getDefenderRoundsWon()));
+    return toView(saved, command.userId());
   }
 
-  private DuelSessionView resolveTimeout(DuelSession session) {
+  private DuelSessionView finishDuel(DuelSession session, boolean villainWon, UUID viewerId) {
+    session.setStatus(villainWon ? DuelStatus.VILLAIN_WON : DuelStatus.HERO_WON);
+    session.setFinishedAt(Instant.now());
+    DuelSession saved = duelPort.save(session);
+    resolveMissionAfterDuel(saved, villainWon);
+    messagingTemplate.convertAndSend(
+        "/topic/duel/" + session.getId(),
+        DuelWsMessage.ended(villainWon ? session.getAttackerUserId() : session.getDefenderUserId()));
+    return toView(saved, viewerId);
+  }
+
+  private DuelSessionView resolveTimeout(DuelSession session, UUID viewerId) {
+    boolean villainWins = session.getAttackerRoundsWon() > session.getDefenderRoundsWon();
     session.setStatus(DuelStatus.TIMEOUT);
     session.setFinishedAt(Instant.now());
     DuelSession saved = duelPort.save(session);
-    resolveMissionAfterDuel(saved, true);
-    messagingTemplate.convertAndSend("/topic/duel/" + session.getId(), DuelWsMessage.cancelled("Timeout"));
-    return toView(saved);
+    resolveMissionAfterDuel(saved, villainWins);
+    messagingTemplate.convertAndSend(
+        "/topic/duel/" + session.getId(), DuelWsMessage.cancelled("Timeout"));
+    return toView(saved, viewerId);
   }
 
   private void resolveMissionAfterDuel(DuelSession session, boolean villainWon) {
-    missionPort.findById(session.getMissionId()).ifPresent(mission -> {
-      mission.setCombatState(villainWon ? MissionCombatState.SABOTADA : MissionCombatState.DEFENDIDA);
-      mission.setUpdatedAt(Instant.now());
-      missionPort.save(mission);
-    });
+    missionPort
+        .findById(session.getMissionId())
+        .ifPresent(
+            mission -> {
+              mission.setCombatState(
+                  villainWon ? MissionCombatState.DERROTADA : MissionCombatState.NORMAL);
+              mission.setUpdatedAt(Instant.now());
+              missionPort.save(mission);
+              missionNotificationPort.notifyMissionUpdate(mission.getId());
+            });
+  }
+
+  private String displayName(UUID userId) {
+    return usuarioPort
+        .findById(userId)
+        .map(Usuario::getNome)
+        .filter(n -> n != null && !n.isBlank())
+        .orElse("Jogador");
   }
 
   private String serializeMoves(List<Integer> moves) {
@@ -401,19 +531,68 @@ public class DuelService
     }
   }
 
-  private PuzzleType puzzleTypeForSeed(String seed) {
-    String normalized = seed.contains("-inf-") ? seed.substring(0, seed.indexOf("-inf-")) : seed;
-    String hex = normalized.substring(0, Math.min(8, normalized.length()));
-    long state = Long.parseLong(hex, 16) & 0xFFFFFFFFL;
-    state = (state * 1664525L + 1013904223L) & 0xFFFFFFFFL;
-    PuzzleType[] types = PuzzleType.values();
-    return types[(int) (state % types.length)];
+  private String duelSeedForPlayer(String baseSeed, String side, int puzzleIndex) {
+    return baseSeed + "-" + side + "-" + puzzleIndex;
   }
 
-  private DuelSessionView toView(DuelSession d) {
+  private PuzzleType duelPuzzleTypeForPlayer(String baseSeed, String side, int puzzleIndex) {
+    int perm = duelPermutationIndex(baseSeed, side);
+    int[] order = DUEL_TYPE_PERMUTATIONS[perm];
+    return DUEL_PUZZLE_TYPES[order[puzzleIndex - 1]];
+  }
+
+  private int duelPermutationIndex(String baseSeed, String side) {
+    String hex = hashHex(baseSeed + "-deck-" + side);
+    long state = Long.parseLong(hex, 16) & 0xFFFFFFFFL;
+    state = (state * 1664525L + 1013904223L) & 0xFFFFFFFFL;
+    return (int) (state % DUEL_TYPE_PERMUTATIONS.length);
+  }
+
+  private String hashHex(String input) {
+    String hex = Integer.toHexString(input.hashCode());
+    if (hex.length() < 8) {
+      return ("00000000" + hex).substring(hex.length());
+    }
+    return hex.substring(0, 8);
+  }
+
+  private DuelSessionView toView(DuelSession d, UUID viewerUserId) {
+    String displaySeed = d.getSeed();
+    PuzzleType displayType = d.getPuzzleType();
+
+    if ((d.getStatus() == DuelStatus.INFILTRATING || d.getStatus() == DuelStatus.PENDING)
+        && viewerUserId != null) {
+      if (!d.getAttackerUserId().equals(viewerUserId)) {
+        displaySeed = "";
+        displayType = PuzzleType.SEQUENCE_INPUT;
+      } else if (d.getStatus() == DuelStatus.PENDING) {
+        displaySeed = "";
+        displayType = PuzzleType.SEQUENCE_INPUT;
+      }
+    } else if (d.getStatus() == DuelStatus.ACTIVE && viewerUserId != null) {
+      boolean isAttacker = d.getAttackerUserId().equals(viewerUserId);
+      boolean isDefender = d.getDefenderUserId().equals(viewerUserId);
+      if (isAttacker || isDefender) {
+        int completed = isAttacker ? d.getAttackerRoundsWon() : d.getDefenderRoundsWon();
+        if (completed < DUEL_PUZZLES_REQUIRED) {
+          int puzzleIndex = completed + 1;
+          String side = isAttacker ? VILLAIN_SIDE : HERO_SIDE;
+          displaySeed = duelSeedForPlayer(d.getSeed(), side, puzzleIndex);
+          displayType = duelPuzzleTypeForPlayer(d.getSeed(), side, puzzleIndex);
+        }
+      }
+    }
+
     return new DuelSessionView(
-        d.getId(), d.getMissionId(), d.getAttackerUserId(), d.getDefenderUserId(),
-        d.getSeed(), d.getPuzzleType(), d.getStatus(),
+        d.getId(),
+        d.getMissionId(),
+        d.getAttackerUserId(),
+        d.getDefenderUserId(),
+        displayName(d.getAttackerUserId()),
+        displayName(d.getDefenderUserId()),
+        displaySeed,
+        displayType,
+        d.getStatus(),
         d.getRoundCurrent(), d.getRoundMax(),
         d.getAttackerRoundsWon(), d.getDefenderRoundsWon(),
         d.getInfiltrationProgress(), INFILTRATION_PUZZLES_REQUIRED,
@@ -432,9 +611,20 @@ public class DuelService
   }
 
   record DuelWsMessage(String type, Object payload) {
+    static DuelWsMessage pendingHeroAccept(Instant acceptUntil) {
+      return new DuelWsMessage(
+          "duel:pending-hero-accept",
+          java.util.Map.of("acceptUntil", acceptUntil.toString()));
+    }
+
     static DuelWsMessage started(String seed, String puzzleType, int roundMax, Instant timeoutAt) {
       return new DuelWsMessage("duel:started",
           java.util.Map.of("seed", seed, "puzzleType", puzzleType, "roundMax", roundMax, "timeoutAt", timeoutAt.toString()));
+    }
+    static DuelWsMessage scoreUpdate(int villainScore, int heroScore) {
+      return new DuelWsMessage(
+          "duel:score-update",
+          java.util.Map.of("villainScore", villainScore, "heroScore", heroScore));
     }
     static DuelWsMessage roundEnd(int round, UUID winnerId) {
       return new DuelWsMessage("duel:round-end",

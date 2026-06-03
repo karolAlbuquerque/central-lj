@@ -220,8 +220,12 @@ public class PuzzleValidationService {
     return (state * LCG_A + LCG_C) & LCG_M;
   }
 
+  /** Estado LCG derivado do seed completo (mesmo algoritmo do cliente). */
   private static long seedToState(String seed) {
-    String hex = seed.replace("-", "").substring(0, 8);
-    return Long.parseLong(hex, 16) & LCG_M;
+    long state = 5381L;
+    for (int i = 0; i < seed.length(); i++) {
+      state = ((state << 5) + state + seed.charAt(i)) & LCG_M;
+    }
+    return state;
   }
 }

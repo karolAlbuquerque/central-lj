@@ -12,12 +12,25 @@ import { api } from "../../services/api";
 import type { MissionDetail, MissionTask } from "../../types/pvp";
 import { MissionInfiltrationAlert } from "../../components/MissionInfiltrationAlert/MissionInfiltrationAlert";
 import { useMissionInfiltrationAlert } from "../../hooks/useMissionInfiltrationAlert";
-import { PUZZLE_LABELS } from "../../utils/puzzle";
+import { PUZZLE_LABELS, validatePuzzleMoves } from "../../utils/puzzle";
 import styles from "./MissionTasksPage.module.css";
 
 const PUZZLE_TIME_LIMIT_SEC = 75;
 const PUZZLE_MAX_ERRORS = 3;
 const PUZZLE_FAIL_CLOSE_MS = 3200;
+
+function isAuthOrSessionError(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("sessão") ||
+    m.includes("sessao") ||
+    m.includes("faça login") ||
+    m.includes("faca login") ||
+    m.includes("não autenticado") ||
+    m.includes("nao autenticado") ||
+    m.includes("jwt")
+  );
+}
 
 function mistakeDetailFor(puzzleType: PuzzleType | null | undefined, flash: string): string {
   if (puzzleType === "CARD_MATCH") return "Você errou um par de cartas.";
@@ -154,9 +167,11 @@ export function MissionTasksPage() {
         kicker="Missão"
         title={mission.titulo}
         description={
-          isMissionCreator
-            ? "Execute tarefas críticas no minigame definido pelo chefe."
-            : "Execute as tarefas atribuídas a você."
+          mission.combatState === "DERROTADA"
+            ? "Esta missão foi derrotada pelo vilão e não aceita novas ações."
+            : isMissionCreator
+              ? "Execute tarefas críticas no minigame definido pelo chefe."
+              : "Execute as tarefas atribuídas a você."
         }
         actions={
           <Link className={styles.btnLink} to={`/missoes/${id}`}>
@@ -164,6 +179,12 @@ export function MissionTasksPage() {
           </Link>
         }
       />
+
+      {mission.combatState === "DERROTADA" ? (
+        <p className={styles.error} role="alert">
+          Missão derrotada — o vilão venceu o duelo. As tarefas não podem mais ser executadas.
+        </p>
+      ) : null}
 
       {/* Mission context strip */}
       <div className={styles.missionContext}>
@@ -384,14 +405,23 @@ function TaskItem({
   }, [puzzleOpen, puzzleType]);
 
   const submitPuzzle = async (moves: number[]) => {
+    if (!puzzleType || !task.puzzleSeed) return;
     setBusy(true);
     onError(null);
     try {
+      if (!validatePuzzleMoves(task.puzzleSeed, puzzleType, moves)) {
+        registerMistake("A solução não passou na verificação local.", "SOLUÇÃO INVÁLIDA!");
+        return;
+      }
       await api.executeMissionTask(missionId, task.id, { action: "SUBMIT_PUZZLE", moves });
       setPuzzleOpen(false);
       onUpdated();
     } catch (e) {
       const base = e instanceof Error ? e.message : "Solução incorreta.";
+      if (isAuthOrSessionError(base)) {
+        onError(base);
+        return;
+      }
       registerMistake(`Envio rejeitado: ${base}`, "SOLUÇÃO INVÁLIDA!");
     } finally {
       setBusy(false);

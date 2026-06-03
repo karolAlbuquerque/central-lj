@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
+import { DuelOutcomeFlash } from "../../components/DuelOutcomeFlash/DuelOutcomeFlash";
 import { EmptyState } from "../../components/EmptyState/EmptyState";
 import { LoadingState } from "../../components/LoadingState/LoadingState";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
@@ -8,10 +9,18 @@ import { MissionTaskPuzzle } from "../../components/puzzles/MissionTaskPuzzle";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
 import { api } from "../../services/api";
 import type { DuelSession, DuelStatus } from "../../types/pvp";
+import {
+  duelExitPath,
+  isDuelFinished,
+  resolveDuelOutcome,
+  type DuelOutcome
+} from "../../utils/duelOutcome";
 import { PUZZLE_LABELS } from "../../utils/puzzle";
 import styles from "./DuelArenaPage.module.css";
 
 const POLL_STATUSES: DuelStatus[] = ["INFILTRATING", "PENDING", "ACTIVE"];
+const DUEL_PUZZLES = 3;
+const OUTCOME_REDIRECT_MS = 3400;
 
 export function DuelArenaPage() {
   const { duelId } = useParams<{ duelId: string }>();
@@ -21,8 +30,44 @@ export function DuelArenaPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [outcome, setOutcome] = useState<DuelOutcome | null>(null);
+  const [outcomePulse, setOutcomePulse] = useState(0);
   const startTime = useRef<number>(Date.now());
   const duelStatusRef = useRef<DuelStatus | null>(null);
+  const outcomeHandledRef = useRef(false);
+  const redirectTimerRef = useRef<number | null>(null);
+
+  const clearRedirectTimer = () => {
+    if (redirectTimerRef.current) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+  };
+
+  const scheduleExitAfterOutcome = useCallback(
+    (finishedDuel: DuelSession, resolved: DuelOutcome) => {
+      if (outcomeHandledRef.current) return;
+      outcomeHandledRef.current = true;
+      setOutcome(resolved);
+      setOutcomePulse(p => p + 1);
+      clearRedirectTimer();
+      redirectTimerRef.current = window.setTimeout(() => {
+        const path = duelExitPath(finishedDuel, user?.role);
+        navigate(path, { replace: true });
+      }, OUTCOME_REDIRECT_MS);
+    },
+    [navigate, user?.role]
+  );
+
+  const maybeHandleFinished = useCallback(
+    (d: DuelSession) => {
+      if (!isDuelFinished(d.status) || outcomeHandledRef.current) return;
+      const resolved = resolveDuelOutcome(d, user?.id, user?.role);
+      if (!resolved) return;
+      scheduleExitAfterOutcome(d, resolved);
+    },
+    [scheduleExitAfterOutcome, user?.id, user?.role]
+  );
 
   const load = useCallback(
     async (silent = false) => {
@@ -39,6 +84,7 @@ export function DuelArenaPage() {
         if (d.status === "ACTIVE" && (prev !== "ACTIVE" || silent)) {
           startTime.current = Date.now();
         }
+        maybeHandleFinished(d);
       } catch (e) {
         if (!silent) {
           setErr(e instanceof Error ? e.message : "Falha ao carregar duelo.");
@@ -49,12 +95,19 @@ export function DuelArenaPage() {
         }
       }
     },
-    [duelId]
+    [duelId, maybeHandleFinished]
   );
 
   useEffect(() => {
+    outcomeHandledRef.current = false;
+    setOutcome(null);
     duelStatusRef.current = null;
+    clearRedirectTimer();
+  }, [duelId]);
+
+  useEffect(() => {
     void load(false);
+    return () => clearRedirectTimer();
   }, [load]);
 
   useEffect(() => {
@@ -65,22 +118,6 @@ export function DuelArenaPage() {
     }, 2500);
     return () => window.clearInterval(t);
   }, [duelId, duel?.status, load]);
-
-  const handleJoin = async () => {
-    if (!duelId) return;
-    setSubmitting(true);
-    setErr(null);
-    try {
-      const joined = await api.joinDuel(duelId);
-      duelStatusRef.current = joined.status;
-      setDuel(joined);
-      startTime.current = Date.now();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Falha ao entrar no duelo.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleInfiltrationSubmit = async (moves: number[]) => {
     if (!duelId || !duel) return;
@@ -96,6 +133,7 @@ export function DuelArenaPage() {
       duelStatusRef.current = result.status;
       setDuel(result);
       startTime.current = Date.now();
+      maybeHandleFinished(result);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Falha na brecha de infiltração.");
       if (e instanceof Error && e.message.includes("falhou")) {
@@ -106,22 +144,38 @@ export function DuelArenaPage() {
     }
   };
 
+  const handleAcceptDuel = async () => {
+    if (!duelId) return;
+    setSubmitting(true);
+    setErr(null);
+    try {
+      const result = await api.joinDuel(duelId);
+      duelStatusRef.current = result.status;
+      setDuel(result);
+      startTime.current = Date.now();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Falha ao aceitar o duelo.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDuelSubmit = async (moves: number[]) => {
-    if (!duelId || !duel) return;
+    if (!duelId || !duel || !user) return;
+    const myCompleted =
+      user.id === duel.attackerUserId ? duel.attackerRoundsWon : duel.defenderRoundsWon;
     setSubmitting(true);
     setErr(null);
     try {
       const result = await api.submitPuzzleProgress(duelId, {
         moves,
-        roundNumber: duel.roundCurrent,
+        roundNumber: myCompleted + 1,
         timeMs: Date.now() - startTime.current
       });
       duelStatusRef.current = result.status;
       setDuel(result);
       startTime.current = Date.now();
-      if (result.status === "VILLAIN_WON" && user?.role === "VILLAIN") {
-        navigate(`/vilao/duelo/${duelId}/sabotagem`);
-      }
+      maybeHandleFinished(result);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Falha ao enviar resposta.");
     } finally {
@@ -136,24 +190,32 @@ export function DuelArenaPage() {
   const isDefender = user?.id === duel.defenderUserId;
   const infiltrationRequired = duel.infiltrationRequired ?? 3;
   const infiltrationProgress = duel.infiltrationProgress ?? 0;
-  const isFinished = ["HERO_WON", "VILLAIN_WON", "CANCELLED", "TIMEOUT"].includes(duel.status);
-  const winner =
-    duel.status === "HERO_WON"
-      ? "Herói venceu!"
-      : duel.status === "VILLAIN_WON"
-        ? "Vilão venceu!"
-        : null;
-
+  const isFinished = isDuelFinished(duel.status);
   const infiltrationStep = Math.min(infiltrationProgress + 1, infiltrationRequired);
+  const puzzlesToWin = duel.roundMax ?? DUEL_PUZZLES;
+  const myCompleted = isAttacker ? duel.attackerRoundsWon : isDefender ? duel.defenderRoundsWon : 0;
+  const myPuzzleStep = Math.min(myCompleted + 1, puzzlesToWin);
+  const canFight = isAttacker || isDefender;
+
+  const outcomeOverlay =
+    outcome ? (
+      <DuelOutcomeFlash
+        kind={outcome.kind}
+        headline={outcome.headline}
+        subline={outcome.subline}
+        pulse={outcomePulse}
+      />
+    ) : null;
 
   if (duel.status === "INFILTRATING") {
     if (isAttacker) {
       return (
         <div className={styles.page}>
+          {outcomeOverlay}
           <PageHeader
             kicker="Fase de infiltração"
             title={`Brecha ${infiltrationStep} de ${infiltrationRequired}`}
-            description="Complete os 3 puzzles para romper as defesas. Só depois a equipe inimiga será alertada."
+            description="Complete os 3 puzzles de brecha. Depois o combate com o herói começa na hora."
           />
           {err ? <p className={styles.error}>{err}</p> : null}
           <div className={styles.infiltrationBar}>
@@ -176,6 +238,7 @@ export function DuelArenaPage() {
               puzzleType={duel.puzzleType}
               seed={duel.seed}
               busy={submitting}
+              onMistake={(flash) => setErr(`Resposta incorreta — ${flash}. Verifique e tente novamente.`)}
               onSubmit={(moves) => {
                 void handleInfiltrationSubmit(moves);
               }}
@@ -186,6 +249,7 @@ export function DuelArenaPage() {
     }
     return (
       <div className={styles.page}>
+        {outcomeOverlay}
         <EmptyState
           title="Infiltração em andamento"
           hint="Um vilão está rompendo as defesas. O alerta só aparece quando as 3 brechas forem concluídas."
@@ -194,89 +258,97 @@ export function DuelArenaPage() {
     );
   }
 
-  if (duel.status === "PENDING") {
-    return (
-      <div className={styles.page}>
-        <PageHeader
-          kicker="Duelo"
-          title="Defesas rompidas"
-          description={
-            isAttacker
-              ? "Brecha concluída. Aguarde o defensor entrar na arena — os puzzles de combate começam em seguida."
-              : "Um vilão infiltrou a missão. Entre na arena para iniciar o combate de puzzles."
-          }
-        />
-        {err ? <p className={styles.error}>{err}</p> : null}
-        <SectionCard title="Aguardando combate">
-          {isDefender ? (
-            <button
-              type="button"
-              className={styles.btnSubmit}
-              disabled={submitting}
-              onClick={() => {
-                void handleJoin();
-              }}
-            >
-              {submitting ? "Entrando…" : "Aceitar duelo e entrar na arena"}
-            </button>
-          ) : (
-            <p className={styles.waiting}>
-              Aguardando o herói defensor aceitar o duelo… A tela atualiza automaticamente quando o
-              combate começar.
-            </p>
-          )}
-          <Link className={styles.missionLink} to={`/missoes/${duel.missionId}`}>
-            Voltar à missão
-          </Link>
-        </SectionCard>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.page}>
+      {outcomeOverlay}
       <PageHeader
         kicker="Arena de duelo"
-        title={`Round ${duel.roundCurrent} / ${duel.roundMax}`}
-        description={`Status: ${duel.status} · Puzzle: ${duel.puzzleType}`}
+        title={
+          isDefender
+            ? "Sua missão foi invadida"
+            : isAttacker
+              ? "Combate com o herói"
+              : "Duelo em andamento"
+        }
+        description={
+          isDefender
+            ? "Derrote o vilão — resolva 3 puzzles antes que ele termine os dele."
+            : isAttacker
+              ? "Derrote o herói — quem completar 3 puzzles primeiro vence."
+              : "Corrida de puzzles entre vilão e herói."
+        }
       />
 
       {err ? <p className={styles.error}>{err}</p> : null}
 
       <div className={styles.scoreRow}>
         <div className={styles.scoreBlock}>
-          <span className={styles.scoreLabel}>Herói</span>
-          <span className={styles.scoreValue}>{duel.defenderRoundsWon}</span>
+          <span className={styles.scoreLabel}>Vilão</span>
+          <span className={styles.scoreValue}>
+            {duel.attackerRoundsWon}
+            <span className={styles.scoreOf}> / {puzzlesToWin}</span>
+          </span>
         </div>
         <span className={styles.vs}>VS</span>
         <div className={styles.scoreBlock}>
-          <span className={styles.scoreLabel}>Vilão</span>
-          <span className={styles.scoreValue}>{duel.attackerRoundsWon}</span>
+          <span className={styles.scoreLabel}>Herói</span>
+          <span className={styles.scoreValue}>
+            {duel.defenderRoundsWon}
+            <span className={styles.scoreOf}> / {puzzlesToWin}</span>
+          </span>
         </div>
       </div>
 
-      {winner ? (
-        <SectionCard title="Duelo encerrado" variant="alert">
-          <p className={styles.winnerMsg}>{winner}</p>
+      {duel.status === "PENDING" && canFight ? (
+        <SectionCard title="Aguardando aceite do herói" variant="alert">
+          {isDefender ? (
+            <>
+              <p className={styles.waiting}>
+                O vilão concluiu as 3 brechas. Aceite o duelo para iniciar o combate de puzzles — se
+                recusar ou demorar, a missão pode ser comprometida.
+              </p>
+              <button
+                type="button"
+                className={styles.btnAcceptDuel}
+                disabled={submitting}
+                onClick={() => {
+                  void handleAcceptDuel();
+                }}
+              >
+                {submitting ? "Aceitando…" : "Aceitar duelo e iniciar combate"}
+              </button>
+            </>
+          ) : (
+            <p className={styles.waiting}>
+              Brechas concluídas. Aguardando o herói aceitar o duelo na arena para o combate começar…
+            </p>
+          )}
         </SectionCard>
-      ) : duel.status === "ACTIVE" ? (
-        <SectionCard title={`Combate: ${PUZZLE_LABELS[duel.puzzleType]}`}>
-          <p className={styles.waiting}>
-            {isAttacker ? "Derrote o defensor neste minigame." : "Defenda a missão neste minigame."}
-          </p>
+      ) : isFinished && outcome ? (
+        <SectionCard title="Duelo encerrado" variant="alert">
+          <p className={styles.winnerMsg}>{outcome.headline}</p>
+          {outcome.subline ? <p className={styles.waiting}>{outcome.subline}</p> : null}
+        </SectionCard>
+      ) : duel.status === "ACTIVE" && canFight && myCompleted < puzzlesToWin ? (
+        <SectionCard title={`Puzzle ${myPuzzleStep} de ${puzzlesToWin} · ${PUZZLE_LABELS[duel.puzzleType]}`}>
           <MissionTaskPuzzle
-            key={`${duel.seed}-${duel.roundCurrent}`}
+            key={`${duel.seed}-${myPuzzleStep}`}
             puzzleType={duel.puzzleType}
             seed={duel.seed}
             busy={submitting}
+            onMistake={(flash) => setErr(`Resposta incorreta — ${flash}. Verifique e tente novamente.`)}
             onSubmit={(moves) => {
               void handleDuelSubmit(moves);
             }}
           />
         </SectionCard>
+      ) : duel.status === "ACTIVE" && canFight ? (
+        <SectionCard title="Aguardando resultado">
+          <p className={styles.waiting}>Você concluiu seus puzzles. Aguardando o adversário…</p>
+        </SectionCard>
       ) : isFinished ? (
         <SectionCard title="Encerrado">
-          <p className={styles.waiting}>Este duelo foi encerrado.</p>
+          <p className={styles.waiting}>Processando resultado do duelo…</p>
         </SectionCard>
       ) : (
         <SectionCard title="Aguardando">

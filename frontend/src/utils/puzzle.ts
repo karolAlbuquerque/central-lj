@@ -31,9 +31,13 @@ function lcgNext(state: number): number {
   return ((state * LCG_A + LCG_C) % LCG_M) >>> 0;
 }
 
+/** Estado LCG derivado do seed completo (alinhado ao backend). */
 function seedToState(seed: string): number {
-  const hex = seed.replace(/-/g, "").substring(0, 8);
-  return parseInt(hex, 16) >>> 0;
+  let state = 5381;
+  for (let i = 0; i < seed.length; i++) {
+    state = (((state << 5) + state) + seed.charCodeAt(i)) >>> 0;
+  }
+  return state >>> 0;
 }
 
 /** Mesma ordem de PuzzleType no backend Java. */
@@ -186,8 +190,7 @@ export function generateArcadeDodgeSequence(seed: string): number[] {
 }
 
 export function generateDragSortShuffle(seed: string, n: number): number[] {
-  const hex = seed.replace(/-/g, "").substring(0, 8);
-  let state = parseInt(hex, 16) >>> 0;
+  let state = seedToState(seed);
   const arr = Array.from({ length: n }, (_, i) => i);
   for (let i = n - 1; i > 0; i--) {
     state = lcgNext(state);

@@ -10,6 +10,7 @@ import {
   PUZZLE_SIZE,
   WIRE_COLORS,
   generateNodeConnectDisplayOrder,
+  generateNodeConnectSolution,
   validatePuzzleMoves
 } from "../../utils/puzzle";
 import styles from "./puzzles.module.css";
@@ -32,6 +33,14 @@ function bezierPath(from: Point, to: Point): string {
 
 export function WireConnectPuzzle({ seed, busy, onMistake, onSubmit }: Props) {
   const displayOrder = useMemo(() => generateNodeConnectDisplayOrder(seed, PUZZLE_SIZE), [seed]);
+  const expectedPorts = useMemo(() => generateNodeConnectSolution(seed, PUZZLE_SIZE), [seed]);
+  const portWireColor = useCallback(
+    (portId: number) => {
+      const wireIdx = expectedPorts.indexOf(portId);
+      return WIRE_COLORS[wireIdx >= 0 ? wireIdx : portId] ?? "#fff";
+    },
+    [expectedPorts]
+  );
   const arenaRef = useRef<HTMLDivElement>(null);
   const wireSocketRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const portSocketRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -165,7 +174,8 @@ export function WireConnectPuzzle({ seed, busy, onMistake, onSubmit }: Props) {
   return (
     <div className={styles.box}>
       <p className={styles.hint}>
-        Arraste cada fio colorido da esquerda até a porta correspondente à direita para desarmar a bomba.
+        Arraste cada fio da esquerda até a porta da mesma cor à direita (Fio 1 → porta da cor do Fio 1, e assim por
+        diante).
       </p>
       <div className={styles.gamePanel}>
         <div
@@ -249,13 +259,17 @@ export function WireConnectPuzzle({ seed, busy, onMistake, onSubmit }: Props) {
                       className={`${styles.wireSocket} ${taken ? styles.wireSocketFilled : ""}`}
                       style={
                         taken
-                          ? { borderColor: WIRE_COLORS[portId], color: WIRE_COLORS[portId] }
-                          : undefined
+                          ? { borderColor: portWireColor(portId), color: portWireColor(portId) }
+                          : { borderColor: portWireColor(portId), color: portWireColor(portId) }
                       }
                     />
                     <span
                       className={styles.wireCable}
-                      style={{ background: WIRE_COLORS[portId], color: WIRE_COLORS[portId], opacity: 0.35 }}
+                      style={{
+                        background: portWireColor(portId),
+                        color: portWireColor(portId),
+                        opacity: taken ? 1 : 0.35
+                      }}
                     />
                     <span className={`${styles.wireLabel} ${styles.portLabel}`}>
                       Porta {String.fromCharCode(65 + portId)}

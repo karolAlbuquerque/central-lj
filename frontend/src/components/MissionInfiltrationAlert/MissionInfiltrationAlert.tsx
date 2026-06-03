@@ -19,16 +19,16 @@ export function MissionInfiltrationAlert({ missionId, duelId, onDismiss }: Props
         </div>
         <p className={styles.kicker}>Alerta crítico</p>
         <h2 id="infiltration-alert-title" className={styles.title}>
-          INFILTRAÇÃO DETECTADA
+          SUA MISSÃO FOI INVADIDA
         </h2>
         <p className={styles.lead}>
-          Um vilão rompeu as barreiras da missão. A equipe precisa responder na arena de duelo
-          antes que a sabotagem se espalhe.
+          Um vilão concluiu as brechas de infiltração. Aceite o duelo na arena e resolva 3 puzzles
+          antes que ele termine os dele — se perder, a missão fica derrotada.
         </p>
         <div className={styles.actions}>
           {duelId ? (
             <Link className={styles.btnPrimary} to={`/duelo/${duelId}`} onClick={onDismiss}>
-              Defender na arena
+              Aceitar duelo na arena
             </Link>
           ) : (
             <Link className={styles.btnPrimary} to={`/missoes/${missionId}`} onClick={onDismiss}>

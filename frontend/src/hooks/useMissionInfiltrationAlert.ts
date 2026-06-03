@@ -36,7 +36,8 @@ export function useMissionInfiltrationAlert(missionId: string | undefined) {
         setDuelId(duel?.id ?? null);
 
         const justEntered = wasAlertState(state) && !wasAlertState(prev);
-        const openOnLoad = prev === null && state === "ALERTA_INFILTRACAO";
+        const openOnLoad =
+          prev === null && (state === "EM_DUELO" || state === "ALERTA_INFILTRACAO");
         if ((justEntered || openOnLoad) && !dismissed.current) {
           setShowAlert(true);
         }

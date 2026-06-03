@@ -9,6 +9,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "puzzle_attempts")
@@ -26,6 +28,7 @@ public class PuzzleAttemptEntity {
   @Column(name = "round_number", nullable = false)
   private int roundNumber;
 
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "move_sequence", columnDefinition = "jsonb")
   private String moveSequence;
 

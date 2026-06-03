@@ -25,13 +25,14 @@ const STATE_LABEL: Record<MissionCombatState, string> = {
   ALERTA_INFILTRACAO: "Alerta",
   EM_DUELO: "Em duelo",
   SABOTADA: "Sabotada",
+  DERROTADA: "Derrotada",
   DEFENDIDA: "Defendida",
   SEM_CHEFE: "Sem chefe",
   EM_CRISE: "Em crise",
   COMPROMETIDA: "Comprometida"
 };
 
-const DONE: MissionCombatState = "COMPROMETIDA";
+const TERMINAL: MissionCombatState[] = ["COMPROMETIDA", "DERROTADA"];
 
 export function HeroAreaPage() {
   const { user } = useAuth();
@@ -66,8 +67,8 @@ export function HeroAreaPage() {
     void load();
   }, [load]);
 
-  const open = missions.filter((m) => m.combatState !== DONE);
-  const done = missions.filter((m) => m.combatState === DONE);
+  const open = missions.filter((m) => !TERMINAL.includes(m.combatState));
+  const done = missions.filter((m) => TERMINAL.includes(m.combatState));
   const urgent = [...open].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
   )[0];

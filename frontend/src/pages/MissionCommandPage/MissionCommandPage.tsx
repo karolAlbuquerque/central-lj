@@ -28,6 +28,7 @@ const COMBAT_STATE_LABEL: Record<string, string> = {
   ALERTA_INFILTRACAO: "Alerta — Infiltração",
   EM_DUELO: "Em duelo",
   SABOTADA: "Sabotada",
+  DERROTADA: "Derrotada",
   DEFENDIDA: "Defendida",
   SEM_CHEFE: "Sem líder",
   EM_CRISE: "Em crise",
@@ -36,6 +37,7 @@ const COMBAT_STATE_LABEL: Record<string, string> = {
 
 const COMBAT_STATE_CLASS: Record<string, string> = {
   SABOTADA: "metaValueDanger",
+  DERROTADA: "metaValueDanger",
   EM_DUELO: "metaValueDanger",
   EM_CRISE: "metaValueDanger",
   COMPROMETIDA: "metaValueDanger",
@@ -222,7 +224,7 @@ export function MissionCommandPage() {
         >
           <Link className={styles.btnPrimary} to={`/duelo/${activeDuel.id}`}>
             {user?.id === activeDuel.defenderUserId && activeDuel.status === "PENDING"
-              ? "Entrar na arena de duelo"
+              ? "Aceitar duelo na arena"
               : "Abrir arena de duelo"}
           </Link>
         </SectionCard>

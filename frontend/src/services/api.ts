@@ -27,10 +27,12 @@ type Json = unknown;
 function normalizeDuelSession(raw: DuelSession): DuelSession {
   return {
     ...raw,
+    attackerName: raw.attackerName ?? null,
+    defenderName: raw.defenderName ?? null,
     infiltrationProgress: raw.infiltrationProgress ?? 0,
     infiltrationRequired: raw.infiltrationRequired ?? 3,
     roundCurrent: raw.roundCurrent ?? 1,
-    roundMax: raw.roundMax ?? 1,
+    roundMax: raw.roundMax ?? 3,
     attackerRoundsWon: raw.attackerRoundsWon ?? 0,
     defenderRoundsWon: raw.defenderRoundsWon ?? 0
   };
@@ -63,13 +65,37 @@ function baseHeaders(contentJson = false): HeadersInit {
   return h;
 }
 
-function friendlyApiMessage(status: number, body: { message?: string; errors?: Record<string, string> }): string {
+function friendlyApiMessage(
+  status: number,
+  body: { message?: string; errors?: Record<string, string> },
+  requestPath = ""
+): string {
   const field = body.errors ? Object.keys(body.errors)[0] : undefined;
   const raw = (field && body.errors?.[field]) || body.message || "";
   const lower = raw.toLowerCase();
 
   if (status === 401) {
-    return "E-mail ou senha incorretos.";
+    if (requestPath.includes("/api/auth/login")) {
+      return "E-mail ou senha incorretos.";
+    }
+    if (requestPath.includes("/api/auth/register")) {
+      return raw || "Não foi possível concluir o cadastro. Tente novamente.";
+    }
+    if (
+      lower.includes("não autenticado") ||
+      lower.includes("jwt") ||
+      lower.includes("credenciais") ||
+      lower.includes("sessão")
+    ) {
+      return "Sessão expirada ou inválida. Faça login novamente.";
+    }
+    if (!getAuthToken()) {
+      return "Faça login para continuar.";
+    }
+    return raw || "Sessão expirada. Faça login novamente.";
+  }
+  if (status === 403) {
+    return raw || "Você não tem permissão para esta ação.";
   }
   if (lower.includes("must not be blank") || lower.includes("não deve estar em branco")) {
     if (field === "email") return "Informe seu e-mail.";
@@ -85,25 +111,19 @@ function friendlyApiMessage(status: number, body: { message?: string; errors?: R
   return `Erro HTTP ${status}`;
 }
 
-function shouldRedirectSessionExpired(requestPath: string): boolean {
+/** Só invalida a sessão globalmente em 401 quando a rota confirma token inválido. */
+function shouldClearSessionOn401(requestPath: string): boolean {
+  if (!getAuthToken()) return false;
   if (requestPath.includes("/api/auth/login") || requestPath.includes("/api/auth/register")) {
     return false;
   }
-  if (requestPath.includes("/api/duels/")) {
-    return false;
-  }
-  if (typeof window === "undefined") return false;
-  const path = window.location.pathname;
-  if (path === "/login" || path === "/cadastro") return false;
-  if (path.includes("/duelo") || path.includes("/vilao/duelo")) return false;
-  if (!getAuthToken()) return false;
-  return true;
+  return requestPath.includes("/api/auth/me");
 }
 
 async function parseJsonResponse(res: Response, requestPath = ""): Promise<Json> {
   const text = await res.text();
   if (!res.ok) {
-    if (res.status === 401 && shouldRedirectSessionExpired(requestPath)) {
+    if (res.status === 401 && shouldClearSessionOn401(requestPath)) {
       setAuthToken(null);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
@@ -114,12 +134,12 @@ async function parseJsonResponse(res: Response, requestPath = ""): Promise<Json>
     if (text) {
       try {
         const body = JSON.parse(text) as { message?: string; errors?: Record<string, string> };
-        message = friendlyApiMessage(res.status, body);
+        message = friendlyApiMessage(res.status, body, requestPath);
       } catch {
         message = `${message} — ${text}`;
       }
     } else if (res.status === 401) {
-      message = friendlyApiMessage(401, {});
+      message = friendlyApiMessage(401, {}, requestPath);
     } else if (res.status >= 500) {
       message =
         "Erro interno no servidor. Reinicie o backend (mvn clean spring-boot:run) e tente novamente.";

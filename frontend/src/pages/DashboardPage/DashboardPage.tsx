@@ -20,6 +20,7 @@ const STATE_LABEL: Record<MissionCombatState, string> = {
   ALERTA_INFILTRACAO: "Alerta",
   EM_DUELO: "Em duelo",
   SABOTADA: "Sabotada",
+  DERROTADA: "Derrotada",
   DEFENDIDA: "Defendida",
   SEM_CHEFE: "Sem chefe",
   EM_CRISE: "Em crise",
@@ -66,7 +67,7 @@ export function DashboardPage() {
   const emAlerta = useMemo(
     () =>
       missions.filter((m) =>
-        ["ALERTA_INFILTRACAO", "EM_DUELO", "SABOTADA", "EM_CRISE"].includes(m.combatState)
+        ["ALERTA_INFILTRACAO", "EM_DUELO", "SABOTADA", "DERROTADA", "EM_CRISE"].includes(m.combatState)
       ).length,
     [missions]
   );
@@ -81,7 +82,7 @@ export function DashboardPage() {
 
   const stateKind = (s: MissionCombatState): "danger" | "warn" | null => {
     if (["ALERTA_INFILTRACAO", "EM_DUELO", "EM_CRISE", "COMPROMETIDA"].includes(s)) return "danger";
-    if (["SABOTADA", "SEM_CHEFE"].includes(s)) return "warn";
+    if (["SABOTADA", "DERROTADA", "SEM_CHEFE"].includes(s)) return "warn";
     return null;
   };
 

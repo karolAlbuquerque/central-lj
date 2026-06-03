@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ARCADE_FRAMES, generateArcadeDodgeSequence, validatePuzzleMoves } from "../../utils/puzzle";
 import styles from "./puzzles.module.css";
 
@@ -11,16 +11,43 @@ type Props = {
 
 const LANE_LABELS = ["Esq", "Centro", "Dir"];
 
+/** 0 = esquerda, 1 = centro, 2 = direita. */
+const KEY_TO_LANE: Record<string, number> = {
+  ArrowLeft: 0,
+  ArrowDown: 1,
+  ArrowRight: 2
+};
+
 export function ArcadeDodgePuzzle({ seed, busy, onMistake, onSubmit }: Props) {
   const target = useMemo(() => generateArcadeDodgeSequence(seed), [seed]);
   const [input, setInput] = useState<number[]>([]);
 
   const complete = input.length === ARCADE_FRAMES;
 
+  const pushLane = useCallback(
+    (lane: number) => {
+      if (busy || complete) return;
+      setInput((prev) => [...prev, lane]);
+    },
+    [busy, complete]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (busy || complete) return;
+      const lane = KEY_TO_LANE[e.key];
+      if (lane === undefined) return;
+      e.preventDefault();
+      pushLane(lane);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [busy, complete, pushLane]);
+
   return (
     <div className={styles.box}>
       <p className={styles.hint}>
-        Arcade de esquiva: escolha a lane correta em 16 ciclos.
+        Arcade de esquiva: escolha a lane correta em 16 ciclos. Setas: ← esquerda, ↓ centro, → direita.
       </p>
       <div className={styles.gamePanel}>
         <div className={styles.dodgeTimeline}>
@@ -42,7 +69,7 @@ export function ArcadeDodgePuzzle({ seed, busy, onMistake, onSubmit }: Props) {
               type="button"
               className={styles.arcadeBtn}
               disabled={busy || complete}
-              onClick={() => setInput((prev) => [...prev, lane])}
+              onClick={() => pushLane(lane)}
             >
               {label}
             </button>

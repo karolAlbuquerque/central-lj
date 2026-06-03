@@ -45,12 +45,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await api.getAuthMe();
       if (seq !== refreshSeq.current) return;
       setUser(me);
-    } catch {
+    } catch (e) {
       if (seq !== refreshSeq.current) return;
       // Login pode ter trocado o token enquanto /me ainda respondia com 401.
       if (getAuthToken() !== tokenAtStart) return;
-      setAuthToken(null);
-      setUser(null);
+      const msg = (e instanceof Error ? e.message : "").toLowerCase();
+      const sessionDead =
+        msg.includes("sessão") ||
+        msg.includes("sessao") ||
+        msg.includes("faça login") ||
+        msg.includes("faca login") ||
+        msg.includes("http 401");
+      if (sessionDead) {
+        setAuthToken(null);
+        setUser(null);
+      }
     }
   }, []);
 

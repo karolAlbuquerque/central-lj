@@ -1,0 +1,159 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+}
+
+.backdropWin {
+  background: rgba(2, 12, 8, 0.82);
+}
+
+.backdropLose {
+  background: rgba(18, 4, 6, 0.88);
+}
+
+.backdropCancel {
+  background: rgba(8, 10, 18, 0.88);
+}
+
+.flash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: min(92vw, 720px);
+  text-align: center;
+  padding: 28px 24px;
+}
+
+.flashWin {
+  animation: duelFlashWin 3.2s ease forwards;
+  background: radial-gradient(
+    circle at center,
+    rgba(46, 229, 157, 0.45) 0%,
+    rgba(0, 120, 70, 0.2) 42%,
+    transparent 72%
+  );
+}
+
+.flashLose {
+  animation: duelFlashLose 3.2s ease forwards;
+  background: radial-gradient(
+    circle at center,
+    rgba(248, 113, 113, 0.5) 0%,
+    rgba(127, 29, 29, 0.28) 45%,
+    transparent 75%
+  );
+}
+
+.flashCancel {
+  animation: duelFlashLose 3.2s ease forwards;
+  background: radial-gradient(
+    circle at center,
+    rgba(148, 163, 184, 0.35) 0%,
+    transparent 70%
+  );
+}
+
+.headline {
+  display: block;
+  font-family: var(--font-display, system-ui);
+  font-size: clamp(22px, 4.5vw, 48px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.flashWin .headline {
+  color: #d1fae5;
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.85),
+    0 0 24px rgba(46, 229, 157, 0.95),
+    0 0 56px rgba(46, 229, 157, 0.75);
+  animation: duelTextPop 3.2s ease forwards;
+}
+
+.flashLose .headline {
+  color: #fee2e2;
+  text-shadow:
+    0 0 10px rgba(255, 255, 255, 0.8),
+    0 0 22px rgba(248, 113, 113, 0.95),
+    0 0 50px rgba(248, 113, 113, 0.7);
+  animation: duelTextPop 3.2s ease forwards;
+}
+
+.flashCancel .headline {
+  color: #e2e8f0;
+  text-shadow: 0 0 20px rgba(148, 163, 184, 0.6);
+}
+
+.subline {
+  font-size: clamp(13px, 2vw, 16px);
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.04em;
+  max-width: 36rem;
+  line-height: 1.45;
+}
+
+@keyframes duelFlashWin {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  8% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  18% {
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes duelFlashLose {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  6% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  14% {
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes duelTextPop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  12% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  22% {
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+  }
+}

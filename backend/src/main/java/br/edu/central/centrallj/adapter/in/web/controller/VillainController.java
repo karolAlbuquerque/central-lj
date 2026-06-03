@@ -56,8 +56,15 @@ public class VillainController {
 
   private DuelSessionResponse toDuelDto(DuelSessionView v) {
     return new DuelSessionResponse(
-        v.id(), v.missionId(), v.attackerUserId(), v.defenderUserId(),
-        v.seed(), v.puzzleType(), v.status(),
+        v.id(),
+        v.missionId(),
+        v.attackerUserId(),
+        v.defenderUserId(),
+        v.attackerName(),
+        v.defenderName(),
+        v.seed(),
+        v.puzzleType(),
+        v.status(),
         v.roundCurrent(), v.roundMax(),
         v.attackerRoundsWon(), v.defenderRoundsWon(),
         v.infiltrationProgress(), v.infiltrationRequired(),

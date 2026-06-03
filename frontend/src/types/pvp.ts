@@ -5,6 +5,7 @@ export type MissionCombatState =
   | "ALERTA_INFILTRACAO"
   | "EM_DUELO"
   | "SABOTADA"
+  | "DERROTADA"
   | "DEFENDIDA"
   | "SEM_CHEFE"
   | "EM_CRISE"
@@ -98,6 +99,8 @@ export type DuelSession = {
   missionId: string;
   attackerUserId: string;
   defenderUserId: string;
+  attackerName?: string | null;
+  defenderName?: string | null;
   seed: string;
   puzzleType: PuzzleType;
   status: DuelStatus;

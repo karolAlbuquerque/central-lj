@@ -7,6 +7,7 @@ import br.edu.central.centrallj.adapter.in.web.security.UsuarioPrincipal;
 import br.edu.central.centrallj.application.exception.ResourceNotFoundException;
 import br.edu.central.centrallj.application.model.DuelSessionView;
 import br.edu.central.centrallj.application.model.SubmitProgressCommand;
+import br.edu.central.centrallj.application.port.in.GetDuelSessionUseCase;
 import br.edu.central.centrallj.application.port.in.JoinDuelUseCase;
 import br.edu.central.centrallj.application.port.in.SubmitInfiltrationProgressUseCase;
 import br.edu.central.centrallj.application.port.in.SubmitPuzzleProgressUseCase;
@@ -43,17 +44,20 @@ public class DuelController {
   private static final List<DuelStatus> MISSION_VISIBLE_DUEL_STATUSES =
       List.of(DuelStatus.PENDING, DuelStatus.ACTIVE);
 
+  private final GetDuelSessionUseCase getDuelSessionUseCase;
   private final DuelSessionPersistencePort duelPort;
   private final SabotageEventPersistencePort sabotagePort;
   private final MissionMemberPersistencePort memberPort;
 
   public DuelController(
+      GetDuelSessionUseCase getDuelSessionUseCase,
       JoinDuelUseCase joinDuelUseCase,
       SubmitInfiltrationProgressUseCase submitInfiltrationUseCase,
       SubmitPuzzleProgressUseCase submitProgressUseCase,
       DuelSessionPersistencePort duelPort,
       SabotageEventPersistencePort sabotagePort,
       MissionMemberPersistencePort memberPort) {
+    this.getDuelSessionUseCase = getDuelSessionUseCase;
     this.joinDuelUseCase = joinDuelUseCase;
     this.submitInfiltrationUseCase = submitInfiltrationUseCase;
     this.submitProgressUseCase = submitProgressUseCase;
@@ -81,16 +85,14 @@ public class DuelController {
     if (!allowed) {
       throw new br.edu.central.centrallj.application.exception.BadRequestException("Acesso negado.");
     }
-    return ResponseEntity.ok(toDto(session));
+    return ResponseEntity.ok(toDtoFromView(getDuelSessionUseCase.getForUser(session.getId(), userId)));
   }
 
   @GetMapping("/{duelId}")
   @PreAuthorize("isAuthenticated()")
   public DuelSessionResponse getState(
       @PathVariable UUID duelId, @AuthenticationPrincipal UsuarioPrincipal principal) {
-    return toDto(
-        duelPort.findById(duelId)
-            .orElseThrow(() -> new ResourceNotFoundException("Duelo não encontrado.")));
+    return toDtoFromView(getDuelSessionUseCase.getForUser(duelId, principal.id()));
   }
 
   @PostMapping("/{duelId}/infiltration-progress")
@@ -106,7 +108,7 @@ public class DuelController {
   }
 
   @PostMapping("/{duelId}/join")
-  @PreAuthorize("hasAnyRole('HERO','VILLAIN')")
+  @PreAuthorize("hasRole('HERO')")
   public DuelSessionResponse join(
       @PathVariable UUID duelId, @AuthenticationPrincipal UsuarioPrincipal principal) {
     return toDtoFromView(joinDuelUseCase.join(duelId, principal.id()));
@@ -154,20 +156,17 @@ public class DuelController {
     return ResponseEntity.noContent().build();
   }
 
-  private DuelSessionResponse toDto(br.edu.central.centrallj.domain.DuelSession s) {
-    return new DuelSessionResponse(
-        s.getId(), s.getMissionId(), s.getAttackerUserId(), s.getDefenderUserId(),
-        s.getSeed(), s.getPuzzleType(), s.getStatus(),
-        s.getRoundCurrent(), s.getRoundMax(),
-        s.getAttackerRoundsWon(), s.getDefenderRoundsWon(),
-        s.getInfiltrationProgress(), 3,
-        s.getStartedAt(), s.getFinishedAt(), s.getTimeoutAt());
-  }
-
   private DuelSessionResponse toDtoFromView(DuelSessionView v) {
     return new DuelSessionResponse(
-        v.id(), v.missionId(), v.attackerUserId(), v.defenderUserId(),
-        v.seed(), v.puzzleType(), v.status(),
+        v.id(),
+        v.missionId(),
+        v.attackerUserId(),
+        v.defenderUserId(),
+        v.attackerName(),
+        v.defenderName(),
+        v.seed(),
+        v.puzzleType(),
+        v.status(),
         v.roundCurrent(), v.roundMax(),
         v.attackerRoundsWon(), v.defenderRoundsWon(),
         v.infiltrationProgress(), v.infiltrationRequired(),

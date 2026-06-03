@@ -5,17 +5,19 @@ import { LoadingState } from "../../components/LoadingState/LoadingState";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
 import { StatCard } from "../../components/StatCard/StatCard";
+import { useMissionUpdates } from "../../hooks/useMissionUpdates";
 import { api } from "../../services/api";
 import type { DuelSession, Mission } from "../../types/pvp";
 import styles from "./VillainOpsPage.module.css";
 
 const COMBAT_LABEL: Record<Mission["combatState"], string> = {
-  LOBBY: "Lobby",
+  LOBBY: "Em formação",
   ACTIVE: "Ativa",
   NORMAL: "Normal",
   ALERTA_INFILTRACAO: "Em alerta",
   EM_DUELO: "Em duelo",
   SABOTADA: "Sabotada",
+  DERROTADA: "Derrotada",
   DEFENDIDA: "Defendida",
   SEM_CHEFE: "Sem chefe",
   EM_CRISE: "Em crise",
@@ -41,7 +43,11 @@ export function VillainOpsPage() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useMissionUpdates(load, 8000);
 
   const handleInfiltrate = async (missionId: string) => {
     setInfiltrating(missionId);
@@ -61,7 +67,7 @@ export function VillainOpsPage() {
       <PageHeader
         kicker="Sala de guerra"
         title="Operações de infiltração"
-        description="Selecione uma missão ativa. Você passará por 3 puzzles de brecha; só então a equipe inimiga será alertada e o duelo começa."
+        description="Selecione uma missão ativa. Após 3 puzzles de brecha, o combate 3×3 com o herói começa na hora — quem resolver 3 puzzles primeiro vence."
       />
 
       <div className={styles.metrics}>

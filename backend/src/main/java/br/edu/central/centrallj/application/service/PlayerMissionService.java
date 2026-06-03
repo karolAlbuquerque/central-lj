@@ -18,6 +18,7 @@ import br.edu.central.centrallj.application.port.in.InviteMissionMemberUseCase;
 import br.edu.central.centrallj.application.port.out.MissionMemberPersistencePort;
 import br.edu.central.centrallj.application.port.out.MissionTaskPersistencePort;
 import br.edu.central.centrallj.application.port.out.PlayerMissionPersistencePort;
+import br.edu.central.centrallj.application.port.out.MissionNotificationPort;
 import br.edu.central.centrallj.application.port.out.UsuarioPersistencePort;
 import br.edu.central.centrallj.domain.MissionCombatState;
 import br.edu.central.centrallj.domain.MissionInviteStatus;
@@ -29,7 +30,7 @@ import br.edu.central.centrallj.domain.PuzzleType;
 import br.edu.central.centrallj.domain.TaskStatus;
 import br.edu.central.centrallj.domain.UserRole;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class PlayerMissionService
   private final MissionMemberPersistencePort memberPort;
   private final MissionTaskPersistencePort taskPort;
   private final UsuarioPersistencePort usuarioPort;
+  private final MissionNotificationPort missionNotificationPort;
   private final PuzzleValidationService puzzleValidation;
 
   public PlayerMissionService(
@@ -55,11 +57,13 @@ public class PlayerMissionService
       MissionMemberPersistencePort memberPort,
       MissionTaskPersistencePort taskPort,
       UsuarioPersistencePort usuarioPort,
+      MissionNotificationPort missionNotificationPort,
       PuzzleValidationService puzzleValidation) {
     this.missionPort = missionPort;
     this.memberPort = memberPort;
     this.taskPort = taskPort;
     this.usuarioPort = usuarioPort;
+    this.missionNotificationPort = missionNotificationPort;
     this.puzzleValidation = puzzleValidation;
   }
 
@@ -99,6 +103,7 @@ public class PlayerMissionService
     chefe.setJoinedAt(now);
     memberPort.save(chefe);
 
+    missionNotificationPort.notifyMissionUpdate(saved.getId());
     return toView(saved);
   }
 
@@ -241,7 +246,9 @@ public class PlayerMissionService
     mission.setStartedAt(now);
     mission.setPartySeed(savedPartySeed(savedUuid(now, requestingUserId)));
     mission.setUpdatedAt(now);
-    return toView(missionPort.save(mission));
+    PlayerMission saved = missionPort.save(mission);
+    missionNotificationPort.notifyMissionUpdate(saved.getId());
+    return toView(saved);
   }
 
   @Override
@@ -264,6 +271,9 @@ public class PlayerMissionService
             .findById(command.missionId())
             .orElseThrow(() -> new ResourceNotFoundException("Missão não encontrada."));
     assertIsMember(command.missionId(), command.requestingUserId());
+    if (mission.getCombatState() == MissionCombatState.DERROTADA) {
+      throw new BadRequestException("Esta missão foi derrotada pelo vilão e não pode mais ser executada.");
+    }
 
     MissionTask task =
         taskPort
@@ -359,8 +369,9 @@ public class PlayerMissionService
 
   private void generateDefaultPuzzlesForParty(PlayerMission mission, List<MissionMember> acceptedMembers) {
     Instant now = Instant.now();
-    List<MissionTask> generated = new ArrayList<>();
+    PuzzleType[] allTypes = PuzzleType.values();
     for (MissionMember member : acceptedMembers) {
+      List<PuzzleType> memberTypes = pickDistinctPuzzleTypes(member.getUserId(), 3, allTypes);
       for (int i = 0; i < 3; i++) {
         MissionTask task = new MissionTask();
         task.setId(UUID.randomUUID());
@@ -370,16 +381,27 @@ public class PlayerMissionService
         task.setDescription("Gerado automaticamente para a party.");
         task.setStatus(TaskStatus.PENDING);
         task.setCritical(true);
-        task.setPuzzleType(puzzleTypeForTask(task.getId()));
+        task.setPuzzleType(memberTypes.get(i));
         task.setDependsOnTaskId(null);
         task.setCreatedAt(now);
         task.setUpdatedAt(now);
-        generated.add(task);
+        taskPort.save(task);
       }
     }
-    for (MissionTask task : generated) {
-      taskPort.save(task);
+  }
+
+  private static List<PuzzleType> pickDistinctPuzzleTypes(UUID memberId, int count, PuzzleType[] allTypes) {
+    PuzzleType[] shuffled = allTypes.clone();
+    String hex = memberId.toString().replace("-", "").substring(0, 8);
+    long state = Long.parseLong(hex, 16) & 0xFFFFFFFFL;
+    for (int i = shuffled.length - 1; i > 0; i--) {
+      state = (state * 1664525L + 1013904223L) & 0xFFFFFFFFL;
+      int j = (int) (state % (i + 1));
+      PuzzleType tmp = shuffled[i];
+      shuffled[i] = shuffled[j];
+      shuffled[j] = tmp;
     }
+    return Arrays.asList(Arrays.copyOf(shuffled, count));
   }
 
   private static UUID savedUuid(Instant now, UUID owner) {

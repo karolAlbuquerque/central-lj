@@ -18,6 +18,7 @@ const STATE_LABEL: Record<MissionCombatState, string> = {
   ALERTA_INFILTRACAO: "Alerta",
   EM_DUELO: "Em duelo",
   SABOTADA: "Sabotada",
+  DERROTADA: "Derrotada",
   DEFENDIDA: "Defendida",
   SEM_CHEFE: "Sem chefe",
   EM_CRISE: "Em crise",
@@ -32,6 +33,7 @@ const STATE_FILTERS: { id: FilterMode; label: string }[] = [
   { id: "ALERTA_INFILTRACAO", label: "Alerta" },
   { id: "EM_DUELO", label: "Em duelo" },
   { id: "SABOTADA", label: "Sabotada" },
+  { id: "DERROTADA", label: "Derrotada" },
   { id: "COMPROMETIDA", label: "Comprometida" }
 ];
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ARCADE_FRAMES, generateArcadeShooterSequence, validatePuzzleMoves } from "../../utils/puzzle";
 import styles from "./puzzles.module.css";
 
@@ -11,21 +11,44 @@ type Props = {
 
 const ARROWS = ["↑", "→", "↓", "←"];
 
+/** 0 = cima, 1 = direita, 2 = baixo, 3 = esquerda (igual aos botões). */
+const KEY_TO_DIRECTION: Record<string, number> = {
+  ArrowUp: 0,
+  ArrowRight: 1,
+  ArrowDown: 2,
+  ArrowLeft: 3
+};
+
 export function ArcadeShooterPuzzle({ seed, busy, onMistake, onSubmit }: Props) {
   const target = useMemo(() => generateArcadeShooterSequence(seed), [seed]);
   const [input, setInput] = useState<number[]>([]);
 
   const complete = input.length === ARCADE_FRAMES;
 
-  const push = (direction: number) => {
-    if (busy || complete) return;
-    setInput((prev) => [...prev, direction]);
-  };
+  const push = useCallback(
+    (direction: number) => {
+      if (busy || complete) return;
+      setInput((prev) => [...prev, direction]);
+    },
+    [busy, complete]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (busy || complete) return;
+      const direction = KEY_TO_DIRECTION[e.key];
+      if (direction === undefined) return;
+      e.preventDefault();
+      push(direction);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [busy, complete, push]);
 
   return (
     <div className={styles.box}>
       <p className={styles.hint}>
-        Arcade de tiro: grave 16 comandos de mira na ordem certa.
+        Arcade de tiro: grave 16 comandos de mira na ordem certa. Use os botões ou as setas do teclado.
       </p>
       <div className={styles.gamePanel}>
         <div className={styles.arcadeTrack}>

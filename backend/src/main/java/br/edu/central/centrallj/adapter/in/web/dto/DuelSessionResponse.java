@@ -10,6 +10,8 @@ public record DuelSessionResponse(
     UUID missionId,
     UUID attackerUserId,
     UUID defenderUserId,
+    String attackerName,
+    String defenderName,
     String seed,
     PuzzleType puzzleType,
     DuelStatus status,
