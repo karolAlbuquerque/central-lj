@@ -141,7 +141,11 @@ export function HeroDetailPage() {
             <GltfHeroViewer
               modelUrl={HERO_DETAIL_MODEL}
               {...HERO_GLTF_VIEW_PRESET}
-              height={480}
+              height={620}
+              scale={1.28}
+              groupPosition={[0, -0.88, 0]}
+              cameraFov={44}
+              cameraPosition={[0, -0.06, 9.2]}
               enableMouseOrbit
             />
           </Suspense>

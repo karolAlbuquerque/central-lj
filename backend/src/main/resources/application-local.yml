@@ -1,6 +1,7 @@
 # Perfil opcional: subir o backend SEM PostgreSQL no Docker (ex.: conflito de porta ou teste rápido).
-# Uso: mvn spring-boot:run -Dspring-boot.run.profiles=local
-# Kafka continua em localhost:9092 se quiser o fluxo completo N2.
+# Uso: ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+# Hibernate create-drop (sem Flyway). Não use globally_quoted_identifiers — quebra DDL no H2.
+# Kafka fica desligado; ligue o Docker (infra/) e remova consumer-enabled:false para o fluxo N1/N2 completo.
 spring:
   datasource:
     url: jdbc:h2:mem:central_lj_local;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
@@ -10,8 +11,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    properties:
-      hibernate:
-        globally_quoted_identifiers: true
   flyway:
     enabled: false
+
+central-lj:
+  kafka:
+    consumer-enabled: false

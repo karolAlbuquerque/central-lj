@@ -6,7 +6,7 @@
 
 .shell {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr 400px;
   gap: 0;
   align-items: start;
 }
@@ -19,10 +19,12 @@
 }
 
 .viewerCol {
-  overflow: hidden;
+  overflow: visible;
   position: sticky;
-  top: 24px;
+  top: 52px;
   align-self: start;
+  display: flex;
+  justify-content: center;
 }
 
 @media (max-width: 1000px) {

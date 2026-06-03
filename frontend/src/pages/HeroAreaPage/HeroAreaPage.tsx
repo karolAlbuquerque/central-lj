@@ -6,12 +6,13 @@ import { LoadingState } from "../../components/LoadingState/LoadingState";
 import { PageHeader } from "../../components/PageHeader/PageHeader";
 import { SectionCard } from "../../components/SectionCard/SectionCard";
 import { StatCard } from "../../components/StatCard/StatCard";
+import { HERO_GLTF_VIEW_PRESET } from "../../components/GltfHeroViewer/heroViewPreset";
 import { api } from "../../services/api";
 import type { HeroDetail } from "../../types/mission";
 import type { Mission, MissionCombatState } from "../../types/pvp";
 import styles from "./HeroAreaPage.module.css";
 
-const MARTIAN_MODEL = "/martian_manhunter_lowpoly.glb";
+const GREEN_LANTERN_MODEL = "/green_lanterntexturedrigged.glb";
 
 const GltfHeroViewer = lazy(() =>
   import("../../components/GltfHeroViewer/GltfHeroViewer").then((m) => ({ default: m.GltfHeroViewer }))
@@ -163,12 +164,13 @@ export function HeroAreaPage() {
         <div className={styles.viewerCol}>
           <Suspense fallback={null}>
             <GltfHeroViewer
-              modelUrl={MARTIAN_MODEL}
-              height={540}
-              normalizeDimensions
-              normalizedTargetSize={2.0}
-              cameraFov={48}
-              cameraPosition={[0, 0.1, 8]}
+              modelUrl={GREEN_LANTERN_MODEL}
+              {...HERO_GLTF_VIEW_PRESET}
+              height={620}
+              scale={1.62}
+              groupPosition={[0, -0.82, 0]}
+              cameraFov={43}
+              cameraPosition={[0, -0.08, 8.9]}
               autoPlayAnimations
               enableMouseOrbit
             />

@@ -3,7 +3,7 @@
   min-height: 100vh;
   background:
     linear-gradient(180deg, rgba(4, 8, 14, 0.38), rgba(4, 8, 14, 0.55)),
-    url("/login.png") center top / cover no-repeat;
+    url("/login.jpg") center top / cover no-repeat;
 }
 
 .split {
