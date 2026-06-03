@@ -12,7 +12,7 @@ const ROLES: { value: Role; icon: string; label: string; desc: string }[] = [
 ];
 
 export function RegisterPage() {
-  const { user, login } = useAuth();
+  const { user, loginWithToken } = useAuth();
   const navigate = useNavigate();
 
   const [nome, setNome] = useState("");
@@ -46,10 +46,10 @@ export function RegisterPage() {
     setBusy(true);
     setError(null);
     try {
-      await api.register({ nome: trimmedNome, email: trimmedEmail, password, role });
-      const loggedIn = await login(trimmedEmail, password);
+      const registered = await api.register({ nome: trimmedNome, email: trimmedEmail, password, role });
+      loginWithToken(registered.accessToken, registered.user);
       const dest =
-        loggedIn.role === "VILLAIN" ? "/vilao/ops" : loggedIn.role === "HERO" ? "/heroi/area" : "/";
+        registered.user.role === "VILLAIN" ? "/vilao/ops" : registered.user.role === "HERO" ? "/heroi/area" : "/";
       navigate(dest, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível cadastrar.");
